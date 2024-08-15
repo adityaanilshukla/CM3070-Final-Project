@@ -18,7 +18,8 @@ def make_env():
     return env
 
 # Load the trained model
-model_path = "model/ppo2_RocketLander-v0_2024-08-02 02:43:38.zip"
+# model_path = "model/ppo2_RocketLander-v0_2024-08-02 02:43:38.zip"
+model_path = "model/ppo2_RocketLander-v0_2024-08-02 02:43:38_step_18000000.zip"
 model = PPO2.load(model_path)
 
 # Create the environment
