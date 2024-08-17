@@ -293,7 +293,7 @@ class RocketLander(gym.Env):
             self.legs.append(leg)
 
         self.lander.linearVelocity = (
-            -self.np_random.uniform(0, INITIAL_RANDOM) * START_SPEED * (initial_x - W / 2) / W,
+            -self.np_random.uniform(0, INITIAL_RANDOM) * START_SPEED* 0.3 * (initial_x - W / 2) / W,
             -START_SPEED)
 
         self.lander.angularVelocity = (1 + INITIAL_RANDOM) * np.random.uniform(-1, 1)

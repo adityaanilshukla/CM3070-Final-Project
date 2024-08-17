@@ -10,6 +10,20 @@ register(
     reward_threshold=0,
 )
 
+def correct_angle(current_angle):
+    # set vehicle at the correct angle
+    angle_error = 0.0 - current_angle # We want the angle to be 0 (upright)
+    desired_gimbal = pid_angle.compute(angle_error, dt)
+
+    # Assign the gimbal action
+    if desired_gimbal > current_gimbal:
+        action = 1  # Gimbal right
+    elif desired_gimbal < current_gimbal:
+        action = 0  # Gimbal left
+    else:
+        action = 6 # Do nothing
+    return action
+
 env = gym.make('RocketLander-v0')
 
 class PIDController:
@@ -64,21 +78,12 @@ while not done:
     current_leg1_contact = obs[3]
     current_leg2_contact = obs[4]
 
-    # set vehicle at the correct angle
-    angle_error = 0.0 - current_angle # We want the angle to be 0 (upright)
-    desired_gimbal = pid_angle.compute(angle_error, dt)
-
-    # Assign the gimbal action
-    if desired_gimbal > current_gimbal:
-        action = 1  # Gimbal right
-    elif desired_gimbal < current_gimbal:
-        action = 0  # Gimbal left
-
+    action = correct_angle(current_angle)
     obs, reward, done, info = env.step(action)
 
     # set throttle
-    vertical_velocity_error = 2.8 - current_vy
-    
+    vertical_velocity_error = 2.9 - current_vy
+
     desired_throttle = pid_throttle.compute(vertical_velocity_error, dt)
 
     obs, reward, done, info = env.step(action)
@@ -99,6 +104,9 @@ while not done:
 
     obs, reward, done, info = env.step(action)
 
+    action = correct_angle(current_angle)
+    obs, reward, done, info = env.step(action)
+
     # maneuver to the landing pad
     if current_vx <= 0.1 or current_vx >= -0.1:
         
@@ -113,25 +121,6 @@ while not done:
             action = 0
 
     obs, reward, done, info = env.step(action)
-
-    # set vehicle at the correct angle
-    angle_error = 0.0 - current_angle # We want the angle to be 0 (upright)
-    desired_gimbal = pid_angle.compute(angle_error, dt)
-
-    # Assign the gimbal action
-    if desired_gimbal > current_gimbal:
-        action = 1  # Gimbal right
-    elif desired_gimbal < current_gimbal:
-        action = 0  # Gimbal left
-
-    obs, reward, done, info = env.step(action)
-
-    #stop any actions once the rocket has landed
-    if current_leg1_contact > 0.0 or current_leg2_contact > 0.0:
-        action = 6
-        obs, reward, done, info = env.step(action)
-
-    # print(current_vx)
 
     step += 1 
     env.render()
