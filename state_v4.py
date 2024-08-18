@@ -77,7 +77,7 @@ def set_throttle(current_vy, current_throttle, current_vx, current_x,dt):
     if abs(current_vx) >= 0.1 and current_vy < 0.1:
         target_vy = 7
     if abs(current_x) > 0 and current_vy < 0.1:
-        target_vy = 9
+        target_vy = 12
     if abs(current_x) < 0 and current_vy < 0.1:
         target_vy = 9
 
@@ -103,9 +103,9 @@ def set_throttle(current_vy, current_throttle, current_vx, current_x,dt):
 def kill_horizontal_velocity(current_x, current_vx, dt):
     action = 6
 
-    if current_vx > 0.1:
+    if current_vx > 0:
         action = 1
-    elif current_vx < 0.1:
+    elif current_vx < 0:
         action = 0
 
     return action
@@ -117,6 +117,42 @@ def move_towards_landing_pad(current_x):
         return 0  # Move right<
     else:
         return 6  # Do nothing
+
+def correct_angle(current_angle, current_gimbal, current_x, current_vx, dt):
+    # Set limits for x position and velocity
+    position_tolerance = 0.1  # Acceptable range for x position
+    velocity_tolerance = 0.2  # Acceptable range for horizontal velocity
+
+    # Increase the aggression factor for angle correction based on distance and velocity
+    position_factor = min(max(abs(current_x) * 0.5, 1), 5)  # Amplify the correction based on distance
+    velocity_factor = min(max(abs(current_vx) * 0.7, 1), 5)  # Amplify the correction based on speed
+
+    # Calculate the target angle with increased aggression when far off
+    if abs(current_x) > position_tolerance or abs(current_vx) > velocity_tolerance:
+        max_angle = np.clip(current_x * position_factor + current_vx * velocity_factor, -0.6, 0.6)
+    else:
+        max_angle = 0.0  # Default upright angle when within tolerances
+
+    # Calculate the error based on the dynamically determined target angle
+    angle_error = max_angle - current_angle
+    desired_gimbal = pid_angle.compute(angle_error, dt)
+
+    # Set the gimbal action based on the desired angle correction
+    if desired_gimbal > current_gimbal:
+        return 1  # Gimbal right
+    elif desired_gimbal < current_gimbal:
+        return 0  # Gimbal left
+    else:
+        return 6  # Do nothing
+
+def landing_now(obs,dt):
+
+    x = obs[0]
+    y = obs[1]
+
+    if y <= -1.3:
+        if abs(x) <= 0.3:
+            return True
 
 def get_current_state(obs):
     """
@@ -152,12 +188,17 @@ step = 0
 while not done:
     dt = 1.0 / env.metadata['video.frames_per_second']
 
-    # Control loop
     current_state = get_current_state(obs)
-    
+    landing = landing_now(obs, dt)
+
+    if landing:
+       continue 
+
     if step == 0:
         start_vel = obs[7]
 
+    # Control loop
+    current_state = get_current_state(obs)
     action = correct_angle(obs[2], obs[6], obs[0], obs[7], dt)
     obs, reward, done, info = env.step(action)
 
@@ -181,7 +222,7 @@ while not done:
         current_state = get_current_state(obs)
         action = correct_angle(obs[2], obs[6], obs[0], obs[7], dt)
         obs, reward, done, info = env.step(action)
-     
+
     step += 1
     env.render()
 
