@@ -6,7 +6,7 @@ from gym.envs.registration import register
 register(
     id='RocketLander-v0',
     entry_point='rocket_lander:RocketLander',  # Assuming rocket_lander.py is in the same directory
-    max_episode_steps=1900,
+    max_episode_steps=1200,
     reward_threshold=0,
 )
 
@@ -149,10 +149,79 @@ def landing_now(obs,dt):
 
     x = obs[0]
     y = obs[1]
+    angle = obs[2]
+    vx = obs[7]
 
     if y <= -1.3:
         if abs(x) <= 0.3:
-            return True
+            if abs(vx) <= 0.05:
+                return True
+
+def physically_land_rocket(obs, dt):
+    """
+    Function to handle the physical landing of the rocket by controlling the throttle and gimbal.
+    
+    Parameters:
+    - obs: The observation returned by the environment, including state variables for the rocket.
+    - dt: Time step for the control actions.
+    
+    Returns:
+    - throttle_action: The action for the throttle.
+    - gimbal_action: The action for the gimbal.
+    """
+    x = obs[0]
+    y = obs[1]
+    angle = obs[2]
+    vx = obs[7]
+    vy = obs[8]
+    current_throttle = obs[5]
+    current_gimbal = obs[6]
+    
+    # Initialize actions
+    throttle_action = 6  # Default: Do nothing
+    gimbal_action = 6    # Default: Do nothing
+    
+    # Determine the action for the thrusters based on vertical position and velocity
+    if y <= -1.3 and abs(x) <= 0.3 and abs(vx) <= 0.05:
+        # If the rocket is in the landing zone
+        if vy < -0.1:
+            # If descending too fast, throttle up to slow down
+            throttle_action = 2  # Throttle up
+        elif vy > 0.1:
+            # If ascending or moving up, throttle down to correct
+            throttle_action = 3  # Throttle down
+        else:
+            # Maintain the current throttle if the descent rate is acceptable
+            throttle_action = 6  # Do nothing
+    else:
+        # Rocket is not in the landing zone; ensure descent is controlled
+        if y > -1.3:
+            # If above the landing zone, apply a moderate throttle to descend
+            throttle_action = 2  # Throttle up to descend
+        else:
+            # If in the landing zone but the descent needs correction
+            if vy < -0.1:
+                # If descending too fast, throttle up
+                throttle_action = 2  # Throttle up
+            elif vy > 0.1:
+                # If moving up, throttle down to stabilize descent
+                throttle_action = 3  # Throttle down
+            else:
+                # Maintain throttle if descent is stable
+                throttle_action = 6  # Do nothing
+
+    # Adjust the gimbal based on the rocket's angle
+    angle_error = 0.0 - angle  # Aim for an upright angle
+    desired_gimbal = pid_angle.compute(angle_error, dt)
+    
+    if desired_gimbal > current_gimbal:
+        gimbal_action = 4  # Gimbal right
+    elif desired_gimbal < current_gimbal:
+        gimbal_action = 5  # Gimbal left
+    else:
+        gimbal_action = 6  # Do nothing
+
+    return throttle_action, gimbal_action
 
 def get_current_state(obs):
     """
@@ -178,8 +247,6 @@ def get_current_state(obs):
     }
     return current_state
 
-start_vel = 0 
-
 # Run a single episode with the FSM-controlled rocket
 obs = env.reset()
 done = False
@@ -189,41 +256,38 @@ while not done:
     dt = 1.0 / env.metadata['video.frames_per_second']
 
     current_state = get_current_state(obs)
-    landing = landing_now(obs, dt)
+    is_landing = landing_now(obs, dt)
 
-    if landing:
-       continue 
-
-    if step == 0:
-        start_vel = obs[7]
-
-    # Control loop
-    current_state = get_current_state(obs)
-    action = correct_angle(obs[2], obs[6], obs[0], obs[7], dt)
-    obs, reward, done, info = env.step(action)
-
-    current_state = get_current_state(obs)
-    action = set_throttle(obs[8], obs[5], obs[7], obs[0], dt)
-    obs, reward, done, info = env.step(action)
-
-    current_state = get_current_state(obs)
-    action = kill_horizontal_velocity(obs[0], obs[7], dt)
-    obs, reward, done, info = env.step(action)
-
-    current_state = get_current_state(obs)
-    action = correct_angle(obs[2], obs[6], obs[0], obs[7], dt)
-    obs, reward, done, info = env.step(action)
-
-    if abs(obs[7]) <= 0.05 or abs(obs[0]) >= 0:
+    if is_landing:
+        throttle_action, gimbal_action = physically_land_rocket(obs, dt)
+        obs, reward, done, info = env.step(throttle_action)
+        obs, reward, done, info = env.step(gimbal_action)
+    else:
+        # Control loop
         current_state = get_current_state(obs)
-        action = move_towards_landing_pad(obs[0])
+        action = correct_angle(obs[2], obs[6], obs[0], obs[7], dt)
+        obs, reward, done, info = env.step(action)
+
+        current_state = get_current_state(obs)
+        action = set_throttle(obs[8], obs[5], obs[7], obs[0], dt)
+        obs, reward, done, info = env.step(action)
+
+        current_state = get_current_state(obs)
+        action = kill_horizontal_velocity(obs[0], obs[7], dt)
         obs, reward, done, info = env.step(action)
 
         current_state = get_current_state(obs)
         action = correct_angle(obs[2], obs[6], obs[0], obs[7], dt)
         obs, reward, done, info = env.step(action)
 
+        if abs(obs[7]) <= 0.05 or abs(obs[0]) >= 0:
+            current_state = get_current_state(obs)
+            action = move_towards_landing_pad(obs[0])
+            obs, reward, done, info = env.step(action)
+
+            current_state = get_current_state(obs)
+            action = correct_angle(obs[2], obs[6], obs[0], obs[7], dt)
+            obs, reward, done, info = env.step(action)
+
     step += 1
     env.render()
-
-print(start_vel)
