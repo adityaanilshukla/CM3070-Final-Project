@@ -6,7 +6,7 @@ from gym.envs.registration import register
 register(
     id='RocketLander-v0',
     entry_point='rocket_lander:RocketLander',  # Assuming rocket_lander.py is in the same directory
-    max_episode_steps=1200,
+    max_episode_steps=1500,
     reward_threshold=0,
 )
 
@@ -215,9 +215,9 @@ def physically_land_rocket(obs, dt):
     desired_gimbal = pid_angle.compute(angle_error, dt)
     
     if desired_gimbal > current_gimbal:
-        gimbal_action = 4  # Gimbal right
+        gimbal_action = 5  # Gimbal right
     elif desired_gimbal < current_gimbal:
-        gimbal_action = 5  # Gimbal left
+        gimbal_action = 4  # Gimbal left
     else:
         gimbal_action = 6  # Do nothing
 
