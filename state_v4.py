@@ -72,12 +72,12 @@ def correct_angle(current_angle, current_gimbal, current_x, current_vx, dt):
 
 def set_throttle(current_vy, current_throttle, current_vx, current_x,dt):
 
-    target_vy = 3.1
+    target_vy = 3
 
     if abs(current_vx) >= 0.1 and current_vy < 0.1:
         target_vy = 12
     if abs(current_x) > 0 and current_vy < 0.1:
-        target_vy = 35
+        target_vy = 45
 
     vertical_velocity_error = target_vy - current_vy
 
@@ -87,14 +87,6 @@ def set_throttle(current_vy, current_throttle, current_vx, current_x,dt):
         return 2  # Throttle up
     elif current_throttle > desired_throttle:
         return 3  # Throttle down
-    else:
-        return 6  # Do nothing
-
-def move_towards_landing_pad(current_x):
-    if current_x > 0:
-        return 1  # Move left
-    elif current_x < 0:
-        return 0  # Move right<
     else:
         return 6  # Do nothing
 
@@ -213,13 +205,7 @@ while not done:
 
         if abs(obs[7]) <= 0.05 or abs(obs[0]) >= 0:
             current_state = get_current_state(obs)
-            action = move_towards_landing_pad(obs[0])
-            obs, reward, done, info = env.step(action)
-
-            current_state = get_current_state(obs)
             action = correct_angle(obs[2], obs[6], obs[0], obs[7], dt)
             obs, reward, done, info = env.step(action)
-
-    # print("current_vy: ", obs[8])
     step += 1
     env.render()
