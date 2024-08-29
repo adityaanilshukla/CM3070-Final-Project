@@ -6,7 +6,7 @@ from gym.envs.registration import register
 register(
     id='RocketLander-v0',
     entry_point='rocket_lander:RocketLander',  # Assuming rocket_lander.py is in the same directory
-    max_episode_steps=4000,
+    max_episode_steps=2500,
     reward_threshold=0,
 )
 
@@ -127,7 +127,7 @@ def landing_now(obs,dt):
     if y <= -1.3 and abs(x) <= 0.3 and abs(vx) <= 0.05:
         return True
 
-def physically_land_rocket(obs, dt):
+def land_rocket(obs, dt):
     x = obs[0]
     y = obs[1]
     angle = obs[2]
@@ -190,7 +190,7 @@ while not done:
     is_landing = landing_now(obs, dt)
 
     if is_landing:
-        throttle_action, gimbal_action = physically_land_rocket(obs, dt)
+        throttle_action, gimbal_action = land_rocket(obs, dt)
         obs, reward, done, info = env.step(throttle_action)
         obs, reward, done, info = env.step(gimbal_action)
     else:
