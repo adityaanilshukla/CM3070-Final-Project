@@ -109,6 +109,12 @@ def within_landing_zone(obs,dt):
     if y <= -1.3 and abs(x) <= 0.3 and abs(vx) <= 0.05:
         return True
 
+def moving_toward_landing_zone(obs,dt):
+    if abs(obs[7]) <= 0.05 or abs(obs[0]) >= 0:
+        return True
+    else:
+        return False
+
 def land_rocket(obs, dt):
     x = obs[0]
     y = obs[1]
@@ -163,15 +169,13 @@ def get_current_state(obs):
 # Run a single episode with the FSM-controlled rocket
 obs = env.reset()
 done = False
-step = 0
-
 while not done:
     dt = 1.0 / env.metadata['video.frames_per_second']
 
+    #determine if the rocket is in the landing zone
     current_state = get_current_state(obs)
-    in_landing_zone = within_landing_zone(obs, dt)
 
-    if in_landing_zone:
+    if within_landing_zone(obs, dt):
         # landing control loop
         throttle_action, gimbal_action = land_rocket(obs, dt)
         obs, reward, done, info = env.step(throttle_action)
@@ -186,9 +190,9 @@ while not done:
         action = set_throttle(obs, dt)
         obs, reward, done, info = env.step(action)
 
-        if abs(obs[7]) <= 0.05 or abs(obs[0]) >= 0:
+        # more aggressive angle control if moving toward landing zone
+        if moving_toward_landing_zone(obs, dt):
             current_state= get_current_state(obs)
             action = correct_angle(obs, dt)
             obs, reward, done, info = env.step(action)
-    step += 1
     env.render()
