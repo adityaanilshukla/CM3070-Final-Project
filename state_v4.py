@@ -45,80 +45,62 @@ pid_angle = PIDController(1200.0, 0.0, 800.0, output_limits=(-3.5, 3.5))
 pid_throttle = PIDController(400.0, 0.0, 200.0, output_limits=(-1.27, 0.96))
 pid_vx = PIDController(15.0, 0.0, 5.0, output_limits=(-1.0, 1.0))  # Increase the gain for more aggressive control
 
-def correct_angle(current_angle, current_gimbal, current_x, current_vx, dt):
-    # Set limits for x position and velocity
-    position_tolerance = 0.01  # Acceptable range for x position
-    velocity_tolerance = 0.1  # Acceptable range for horizontal velocity
+def set_throttle(obs,dt):
+    target_vy = 3 # target descent rate
 
-    # Calculate the target angle based on current x position and horizontal velocity
-    if abs(current_x) > position_tolerance or abs(current_vx) > velocity_tolerance:
-        # If x position or velocity is outside the limits, allow a maximum tilt
-        max_angle = np.clip(current_x * 0.1 + current_vx * 0.2, -0.3, 0.3)  # Dynamically determine the max angle
-    else:
-        # If within limits, aim for an upright angle
-        max_angle = 0.0
+    x = obs[0]  # x position
+    throttle = obs[5]  # Throttle
+    vx = obs[7]  # Horizontal velocity
+    vy = obs[8]  # Vertical velocity
 
-    # Calculate the error based on the dynamically determined target angle
-    angle_error = max_angle - current_angle
-    desired_gimbal = pid_angle.compute(angle_error, dt)
-
-    # Set the gimbal action based on the desired angle correction
-    if desired_gimbal > current_gimbal:
-        return 1  # Gimbal right
-    elif desired_gimbal < current_gimbal:
-        return 0  # Gimbal left
-    else:
-        return 6  # Do nothing
-
-def set_throttle(current_vy, current_throttle, current_vx, current_x,dt):
-
-    target_vy = 3
-
-    if abs(current_vx) >= 0.1 and current_vy < 0.1:
+    if abs(vx) >= 0.1 and vy < 0.1:
         target_vy = 12
-    if abs(current_x) > 0 and current_vy < 0.1:
+    if abs(x) > 0 and vy < 0.1:
         target_vy = 45
 
-    vertical_velocity_error = target_vy - current_vy
-
+    vertical_velocity_error = target_vy - vy
     desired_throttle = pid_throttle.compute(vertical_velocity_error, dt)
 
-    if current_throttle < desired_throttle:
-        return 2  # Throttle up
-    elif current_throttle > desired_throttle:
-        return 3  # Throttle down
+    if throttle < desired_throttle:
+        return 2 # Throttle up
+    elif throttle > desired_throttle:
+        return 3 # Throttle down
     else:
-        return 6  # Do nothing
+        return 6 # Do nothing
 
-def correct_angle(current_angle, current_gimbal, current_x, current_vx, dt):
+def correct_angle(obs, dt):
+    x = obs[0]  # x position
+    angle = obs[2]  # Angle of the rocket
+    gimbal = obs[6]  # Gimbal angle
+    vx = obs[7]  # Horizontal velocity
+
     # Set limits for x position and velocity
     position_tolerance = 0.1  # Acceptable range for x position
     velocity_tolerance = 0.2  # Acceptable range for horizontal velocity
-
+    
     # Increase the aggression factor for angle correction based on distance and velocity
-    position_factor = min(max(abs(current_x) * 0.5, 1), 5)  # Amplify the correction based on distance
-    velocity_factor = min(max(abs(current_vx) * 0.7, 1), 5)  # Amplify the correction based on speed
+    position_factor = min(max(abs(x) * 0.5, 1), 5)  # Amplify the correction based on distance
+    velocity_factor = min(max(abs(vx) * 0.7, 1), 5)  # Amplify the correction based on speed
 
     # Calculate the target angle with increased aggression when far off
-    if abs(current_x) > position_tolerance or abs(current_vx) > velocity_tolerance:
-        max_angle = np.clip(current_x * position_factor + current_vx * velocity_factor, -0.6, 0.6)
+    if abs(x) > position_tolerance or abs(vx) > velocity_tolerance:
+        max_angle = np.clip(x * position_factor + vx * velocity_factor, -0.6, 0.6)
     else:
-        max_angle = 0.0  # Default upright angle when within tolerances
+        max_angle = 0.0
 
     # Calculate the error based on the dynamically determined target angle
-    angle_error = max_angle - current_angle
+    angle_error = max_angle - angle
     desired_gimbal = pid_angle.compute(angle_error, dt)
 
     # Set the gimbal action based on the desired angle correction
-    if desired_gimbal > current_gimbal:
-        return 1  # Gimbal right
-    elif desired_gimbal < current_gimbal:
-        return 0  # Gimbal left
+    if desired_gimbal > gimbal:
+        return 1
+    elif desired_gimbal < gimbal:
+        return 0
     else:
-        return 6  # Do nothing
+        return 6
 
-def landing_now(obs,dt):
-
+def within_landing_zone(obs,dt):
     x = obs[0]
     y = obs[1]
     angle = obs[2]
@@ -187,25 +169,26 @@ while not done:
     dt = 1.0 / env.metadata['video.frames_per_second']
 
     current_state = get_current_state(obs)
-    is_landing = landing_now(obs, dt)
+    in_landing_zone = within_landing_zone(obs, dt)
 
-    if is_landing:
+    if in_landing_zone:
+        # landing control loop
         throttle_action, gimbal_action = land_rocket(obs, dt)
         obs, reward, done, info = env.step(throttle_action)
         obs, reward, done, info = env.step(gimbal_action)
     else:
-        # Control loop
+        # Main control loop
         current_state = get_current_state(obs)
-        action = correct_angle(obs[2], obs[6], obs[0], obs[7], dt)
+        action = correct_angle(obs, dt)
         obs, reward, done, info = env.step(action)
 
         current_state = get_current_state(obs)
-        action = set_throttle(obs[8], obs[5], obs[7], obs[0], dt)
+        action = set_throttle(obs, dt)
         obs, reward, done, info = env.step(action)
 
         if abs(obs[7]) <= 0.05 or abs(obs[0]) >= 0:
-            current_state = get_current_state(obs)
-            action = correct_angle(obs[2], obs[6], obs[0], obs[7], dt)
+            current_state= get_current_state(obs)
+            action = correct_angle(obs, dt)
             obs, reward, done, info = env.step(action)
     step += 1
     env.render()
