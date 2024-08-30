@@ -53,8 +53,10 @@ def set_throttle(obs,dt):
     vx = obs[7]  # Horizontal velocity
     vy = obs[8]  # Vertical velocity
 
+    # Increase the target descent rate when outside the horizontal velocity threshold
     if abs(vx) >= 0.1 and vy < 0.1:
         target_vy = 12
+    # Increase the target descent rate when the rocket is far from the landing zone
     if abs(x) > 0 and vy < 0.1:
         target_vy = 45
 
@@ -94,11 +96,11 @@ def correct_angle(obs, dt):
 
     # Set the gimbal action based on the desired angle correction
     if desired_gimbal > gimbal:
-        return 1
+        return 1 # Gimbal right
     elif desired_gimbal < gimbal:
-        return 0
+        return 0 # Gimbal left
     else:
-        return 6
+        return 6 # Do nothing
 
 def within_landing_zone(obs,dt):
     x = obs[0]
@@ -110,6 +112,7 @@ def within_landing_zone(obs,dt):
         return True
 
 def moving_toward_landing_zone(obs,dt):
+    # Check if the rocket is moving toward the landing zone
     if abs(obs[7]) <= 0.05 or abs(obs[0]) >= 0:
         return True
     else:
@@ -122,16 +125,19 @@ def land_rocket(obs, dt):
     vx = obs[7]
     vy = obs[8]
     current_throttle = obs[5]
-    current_gimbal = obs[6]
+    current_angle = obs[6]
     
     # Initialize actions
     throttle_action = 6  # Default: Do nothing
-    gimbal_action = 6    # Default: Do nothing
+    thruster_action = 6    # Default: Do nothing
+
+    landing_descent_rate = 2.8  # Target descent rate for landing
+    maximum_ascent_rate = 0.1  # Maximum ascent rate for landing
     
-    if vy < 2.8:
+    if vy < landing_descent_rate:
         # If descending too fast, throttle up to slow down
         throttle_action = 2  # Throttle up
-    elif vy > 0.1:
+    elif vy > maximum_ascent_rate:
         # If ascending or moving up, throttle down to correct
         throttle_action = 3  # Throttle down
     else:
@@ -140,17 +146,18 @@ def land_rocket(obs, dt):
 
     # Adjust the gimbal based on the rocket's angle
     angle_error = 0.0 - angle  # Aim for an upright angle
-    desired_gimbal = pid_angle.compute(angle_error, dt)
+    desired_angle = pid_angle.compute(angle_error, dt)
     
-    if desired_gimbal > current_gimbal:
-        gimbal_action = 5  # Gimbal right
-    elif desired_gimbal < current_gimbal:
-        gimbal_action = 4  # Gimbal left
+    if desired_angle > current_angle:
+        thruster_action = 5  # Gimbal right
+    elif desired_angle < current_angle:
+        thruster_action = 4  # Gimbal left
     else:
-        gimbal_action = 6  # Do nothing
+        thruster_action = 6  # Do nothing
 
-    return throttle_action, gimbal_action
+    return throttle_action, thruster_action
 
+# Function to get the current values of the state variables
 def get_current_state(obs):
     current_state = {
         'x': obs[0],
@@ -171,15 +178,13 @@ obs = env.reset()
 done = False
 while not done:
     dt = 1.0 / env.metadata['video.frames_per_second']
-
-    #determine if the rocket is in the landing zone
-    current_state = get_current_state(obs)
+    current_state = get_current_state(obs) # Get the current state variables
 
     if within_landing_zone(obs, dt):
         # landing control loop
-        throttle_action, gimbal_action = land_rocket(obs, dt)
+        throttle_action, thruster_action = land_rocket(obs, dt)
         obs, reward, done, info = env.step(throttle_action)
-        obs, reward, done, info = env.step(gimbal_action)
+        obs, reward, done, info = env.step(thruster_action)
     else:
         # Main control loop
         current_state = get_current_state(obs)
@@ -190,7 +195,7 @@ while not done:
         action = set_throttle(obs, dt)
         obs, reward, done, info = env.step(action)
 
-        # more aggressive angle control if moving toward landing zone
+        # apply angle corrrection again for more aggressive angle control if moving toward landing zone
         if moving_toward_landing_zone(obs, dt):
             current_state= get_current_state(obs)
             action = correct_angle(obs, dt)
