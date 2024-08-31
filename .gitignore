@@ -2,3 +2,5 @@ rocket-lander-env
 __pycache__/logging.cpython-37.pyc
 __pycache__/rocket_lander.cpython-37.pyc
 todo.txt
+__pycache__/fsm_controller.cpython-37.pyc
+rocket-lander-env-windows

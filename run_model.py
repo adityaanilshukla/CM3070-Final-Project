@@ -1,4 +1,5 @@
 import gym
+import os
 import numpy as np
 from stable_baselines import PPO2
 from stable_baselines.common.vec_env import DummyVecEnv
@@ -19,7 +20,13 @@ def make_env():
 
 # Load the trained model
 # model_path = "model/ppo2_RocketLander-v0_2024-08-02 02:43:38.zip"
-model_path = "model/ppo2_RocketLander-v0_2024-08-02 02:43:38_step_18000000.zip"
+# Determine the correct model path based on the operating system
+if os.name == 'posix':  # This will be true for Linux and macOS
+    model_path = "model/ppo2_RocketLander-v0_2024-08-02 02:43:38_step_18000000.zip"
+elif os.name == 'nt':  # This will be true for Windows
+    model_path = "model\\ppo2_RocketLander-v0_2024-08-02 02_43_38_step_18000000.zip"
+else:
+    raise ValueError("Unsupported operating system")
 model = PPO2.load(model_path)
 
 # Create the environment

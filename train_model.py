@@ -15,7 +15,7 @@ import shutil
 register(
     id='RocketLander-v0',
     entry_point='rocket_lander:RocketLander',  # Adjust the path as needed
-    max_episode_steps=1000,
+    max_episode_steps=2500,
     reward_threshold=0,
 )
 
