@@ -10,9 +10,6 @@ This repository contains the code for a rocket landing simulation using both Fin
   - [Windows](#windows)
 - [Installing Dependencies](#installing-dependencies)
 - [Running the Project](#running-the-project)
-- [Project Structure](#project-structure)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Prerequisites
 
@@ -95,4 +92,10 @@ Once the virtual environment is activated, you need to install the required pack
 To run the Finite State Machine (FSM) model:
 
 ```bash
-python run_fsm.py
+python state_v4.py
+```
+### Running the RL model 
+
+```bash
+python run_model.py
+```

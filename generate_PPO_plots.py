@@ -17,7 +17,10 @@ register(
 )
 
 # Load the trained PPO model
-model_path = "model/ppo2_RocketLander-v0_2024-08-02 02:43:38_step_18000000.zip"
+if os.name == 'posix':  # This will be true for Linux and macOS
+    model_path = "model/ppo2_RocketLander-v0_2024-08-02024338_step_18000000.zip"
+elif os.name == 'nt':  # This will be true for Windows
+    model_path = "model\\ppo2_RocketLander-v0_2024-08-0202_43_38_step_18000000.zip"
 model = PPO2.load(model_path)
 
 # Create the environment
