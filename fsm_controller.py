@@ -173,60 +173,6 @@ def get_current_state(obs):
     }
     return current_state
 
-# def fsm_control_loop(env, render=False):
-#     """
-#     The main control loop for the FSM model. This function handles the control flow for landing the rocket,
-#     based on the current state of the environment.
-#
-#     Parameters:
-#     - env: The environment in which the rocket is being controlled.
-#     - render: Boolean flag to render the environment during each step.
-#
-#     Returns:
-#     - final_obs: The final observation after the loop ends.
-#     - total_reward: The accumulated reward over the episode.
-#     - done: Boolean flag indicating if the episode is finished.
-#     """
-#     obs = env.reset()
-#     done = False
-#     total_reward = 0
-#
-#     while not done:
-#         dt = 1.0 / env.metadata['video.frames_per_second']
-#         current_state = get_current_state(obs)  # Get the current state variables
-#
-#         if within_landing_zone(obs, dt):
-#             # Landing control loop
-#             throttle_action, thruster_action = land_rocket(obs, dt)
-#             obs, reward, done, info = env.step(throttle_action)
-#             total_reward += reward
-#             obs, reward, done, info = env.step(thruster_action)
-#             total_reward += reward
-#         else:
-#             # Main control loop
-#             current_state = get_current_state(obs)
-#             action = correct_angle(obs, dt)
-#             obs, reward, done, info = env.step(action)
-#             total_reward += reward
-#
-#             current_state = get_current_state(obs)
-#             action = set_throttle(obs, dt)
-#             obs, reward, done, info = env.step(action)
-#             total_reward += reward
-#
-#             # Apply angle correction again for more aggressive angle control if moving toward landing zone
-#             if moving_toward_landing_zone(obs, dt):
-#                 current_state = get_current_state(obs)
-#                 action = correct_angle(obs, dt)
-#                 obs, reward, done, info = env.step(action)
-#                 total_reward += reward
-#
-#         if render:
-#             env.render()
-#
-#     return obs, total_reward, done
-#
-
 
 def fsm_control_loop(env, render=False):
     """
