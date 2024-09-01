@@ -1,5 +1,6 @@
 import numpy as np
 import gym
+import time
 from gym.envs.registration import register
 
 # Register the custom environment
@@ -43,7 +44,6 @@ class PIDController:
 # PID controllers for each control variable
 pid_angle = PIDController(1200.0, 0.0, 800.0, output_limits=(-3.5, 3.5))
 pid_throttle = PIDController(400.0, 0.0, 200.0, output_limits=(-1.27, 0.96))
-pid_vx = PIDController(15.0, 0.0, 5.0, output_limits=(-1.0, 1.0))  # Increase the gain for more aggressive control
 
 def set_throttle(obs,dt):
     target_vy = 3 # target descent rate
@@ -172,3 +172,155 @@ def get_current_state(obs):
         'v_angle': obs[9]
     }
     return current_state
+
+# def fsm_control_loop(env, render=False):
+#     """
+#     The main control loop for the FSM model. This function handles the control flow for landing the rocket,
+#     based on the current state of the environment.
+#
+#     Parameters:
+#     - env: The environment in which the rocket is being controlled.
+#     - render: Boolean flag to render the environment during each step.
+#
+#     Returns:
+#     - final_obs: The final observation after the loop ends.
+#     - total_reward: The accumulated reward over the episode.
+#     - done: Boolean flag indicating if the episode is finished.
+#     """
+#     obs = env.reset()
+#     done = False
+#     total_reward = 0
+#
+#     while not done:
+#         dt = 1.0 / env.metadata['video.frames_per_second']
+#         current_state = get_current_state(obs)  # Get the current state variables
+#
+#         if within_landing_zone(obs, dt):
+#             # Landing control loop
+#             throttle_action, thruster_action = land_rocket(obs, dt)
+#             obs, reward, done, info = env.step(throttle_action)
+#             total_reward += reward
+#             obs, reward, done, info = env.step(thruster_action)
+#             total_reward += reward
+#         else:
+#             # Main control loop
+#             current_state = get_current_state(obs)
+#             action = correct_angle(obs, dt)
+#             obs, reward, done, info = env.step(action)
+#             total_reward += reward
+#
+#             current_state = get_current_state(obs)
+#             action = set_throttle(obs, dt)
+#             obs, reward, done, info = env.step(action)
+#             total_reward += reward
+#
+#             # Apply angle correction again for more aggressive angle control if moving toward landing zone
+#             if moving_toward_landing_zone(obs, dt):
+#                 current_state = get_current_state(obs)
+#                 action = correct_angle(obs, dt)
+#                 obs, reward, done, info = env.step(action)
+#                 total_reward += reward
+#
+#         if render:
+#             env.render()
+#
+#     return obs, total_reward, done
+#
+
+
+def fsm_control_loop(env, render=False):
+    """
+    The main control loop for the FSM model. This function handles the control flow for landing the rocket,
+    based on the current state of the environment.
+
+    Parameters:
+    - env: The environment in which the rocket is being controlled.
+    - render: Boolean flag to render the environment during each step.
+
+    Returns:
+    - final_obs: The final observation after the loop ends.
+    - total_reward: The accumulated reward over the episode.
+    - metrics: A dictionary containing lists of deviations, response times, gimbal smoothness, and throttle smoothness.
+    - done: Boolean flag indicating if the episode is finished.
+    """
+    obs = env.reset()
+    done = False
+    total_reward = 0
+
+    episode_deviations = []
+    episode_response_times = []
+    episode_gimbal_smoothness = []
+    episode_throttle_smoothness = []
+    
+    start_correction_time = None
+    last_gimbal_action = None
+    last_throttle_action = None
+    
+    while not done:
+        dt = 1.0 / env.metadata['video.frames_per_second']
+        current_state = get_current_state(obs)  # Get the current state variables
+
+        # Monitor angle deviation from 0 (stability)
+        angle_deviation = abs(obs[2])  # Assuming obs[2] is the angle
+        episode_deviations.append(angle_deviation)
+
+        # Detect a significant deviation
+        if angle_deviation > 0.1 and start_correction_time is None:
+            start_correction_time = time.time()
+
+        # If a correction is ongoing and the angle is back within the correction threshold
+        if start_correction_time is not None and angle_deviation <= 0.02:
+            response_time = time.time() - start_correction_time
+            episode_response_times.append(response_time)
+            start_correction_time = None  # Reset for the next deviation
+
+        if within_landing_zone(obs, dt):
+            # Landing control loop
+            throttle_action, thruster_action = land_rocket(obs, dt)
+            obs, reward, done, info = env.step(throttle_action)
+            total_reward += reward
+            obs, reward, done, info = env.step(thruster_action)
+            total_reward += reward
+        else:
+            # Main control loop
+            current_state = get_current_state(obs)
+            gimbal_action = correct_angle(obs, dt)
+            obs, reward, done, info = env.step(gimbal_action)
+            total_reward += reward
+
+            current_state = get_current_state(obs)
+            throttle_action = set_throttle(obs, dt)
+            obs, reward, done, info = env.step(throttle_action)
+            total_reward += reward
+
+            # Apply angle correction again for more aggressive angle control if moving toward landing zone
+            if moving_toward_landing_zone(obs, dt):
+                current_state = get_current_state(obs)
+                gimbal_action = correct_angle(obs, dt)
+                obs, reward, done, info = env.step(gimbal_action)
+                total_reward += reward
+
+        # Monitor control inputs for smoothness
+        if last_gimbal_action is not None:
+            gimbal_change = abs(gimbal_action - last_gimbal_action)
+            episode_gimbal_smoothness.append(gimbal_change)
+
+        if last_throttle_action is not None:
+            throttle_change = abs(throttle_action - last_throttle_action)
+            episode_throttle_smoothness.append(throttle_change)
+
+        last_gimbal_action = gimbal_action
+        last_throttle_action = throttle_action
+
+        if render:
+            env.render()
+
+    metrics = {
+        'deviations': episode_deviations,
+        'response_times': episode_response_times,
+        'gimbal_smoothness': episode_gimbal_smoothness,
+        'throttle_smoothness': episode_throttle_smoothness
+    }
+
+    return obs, total_reward, metrics, done
+
