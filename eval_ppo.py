@@ -35,12 +35,16 @@ def evaluate_ppo_model(num_episodes=100):
     episodes = []
     max_deviations = []  # List to store the maximum deviations for each episode
     avg_deviations = []  # List to store the average deviations for each episode
+    min_deviations = []  # List to store the minimum deviations for each episode
     max_response_times = []  # List to store the maximum response times for each episode
     avg_response_times = []  # List to store the average response times for each episode
+    min_response_times = []  # List to store the minimum response times for each episode
     max_gimbal_angles = []  # List to store the maximum gimbal angles for each episode
     avg_gimbal_angles = []  # List to store the average gimbal angles for each episode
+    min_gimbal_angles = []  # List to store the minimum gimbal angles for each episode
     max_throttle_settings = []  # List to store the maximum throttle settings for each episode
     avg_throttle_settings = []  # List to store the average throttle settings for each episode
+    min_throttle_settings = []  # List to store the minimum throttle settings for each episode
     avg_cpu_usages = []  # List to store average CPU usage for each episode
     time_taken_to_land = []  # List to store the time taken to land in seconds for each episode
     landing_successes = []  # List to store landing success for each episode
@@ -112,44 +116,55 @@ def evaluate_ppo_model(num_episodes=100):
         # Record landing success
         landing_successes.append(landed)
 
-        # Record the max and average deviations for the episode
+        # Record the max, min, and average deviations for the episode
         max_deviation = max(episode_deviations)
         avg_deviation = np.mean(episode_deviations)
+        min_deviation = min(episode_deviations)
         max_deviations.append(max_deviation)
         avg_deviations.append(avg_deviation)
+        min_deviations.append(min_deviation)
 
-        # Record the max and average response times for the episode
+        # Record the max, min, and average response times for the episode
         if episode_response_times:
             max_response_time = max(episode_response_times)
             avg_response_time = np.mean(episode_response_times)
+            min_response_time = min(episode_response_times)
         else:
             max_response_time = 0
             avg_response_time = 0
+            min_response_time = 0
 
         max_response_times.append(max_response_time)
         avg_response_times.append(avg_response_time)
+        min_response_times.append(min_response_time)
 
-        # Record the max and average gimbal angles for the episode
+        # Record the max, min, and average gimbal angles for the episode
         if episode_gimbal_angles:
             max_gimbal_angle = max(episode_gimbal_angles)
             avg_gimbal_angle = np.mean(episode_gimbal_angles)
+            min_gimbal_angle = min(episode_gimbal_angles)
         else:
             max_gimbal_angle = 0
             avg_gimbal_angle = 0
+            min_gimbal_angle = 0
 
         max_gimbal_angles.append(max_gimbal_angle)
         avg_gimbal_angles.append(avg_gimbal_angle)
+        min_gimbal_angles.append(min_gimbal_angle)
 
-        # Record the max and average throttle settings for the episode
+        # Record the max, min, and average throttle settings for the episode
         if episode_throttle_settings:
             max_throttle_setting = max(episode_throttle_settings)
             avg_throttle_setting = np.mean(episode_throttle_settings)
+            min_throttle_setting = min(episode_throttle_settings)
         else:
             max_throttle_setting = 0
             avg_throttle_setting = 0
+            min_throttle_setting = 0
 
         max_throttle_settings.append(max_throttle_setting)
         avg_throttle_settings.append(avg_throttle_setting)
+        min_throttle_settings.append(min_throttle_setting)
 
         # Record the average CPU usage for the episode
         avg_cpu_usages.append(np.mean(cpu_usages))
@@ -166,12 +181,16 @@ def evaluate_ppo_model(num_episodes=100):
         episodes=episodes,
         max_deviations=max_deviations,
         avg_deviations=avg_deviations,
+        min_deviations=min_deviations,
         max_response_times=max_response_times,
         avg_response_times=avg_response_times,
+        min_response_times=min_response_times,
         max_gimbal_smoothness=max_gimbal_angles,  # Plot gimbal angles directly
         avg_gimbal_smoothness=avg_gimbal_angles,  # Plot average gimbal angles
+        min_gimbal_smoothness=min_gimbal_angles,  # Plot minimum gimbal angles
         max_throttle_smoothness=max_throttle_settings,  # Separate throttle settings
         avg_throttle_smoothness=avg_throttle_settings,  # Separate average throttle settings
+        min_throttle_smoothness=min_throttle_settings,  # Separate minimum throttle settings
         avg_cpu_usages=avg_cpu_usages,
         time_taken_to_land=time_taken_to_land,
         model_type='PPO',  # Specify the model type as 'PPO'
