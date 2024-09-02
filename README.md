@@ -92,10 +92,10 @@ Once the virtual environment is activated, you need to install the required pack
 To run the Finite State Machine (FSM) model:
 
 ```bash
-python state_v4.py
+python run_fsm_model.py
 ```
 ### Running the RL model 
 
 ```bash
-python run_model.py
+python run_ppo_model.py
 ```

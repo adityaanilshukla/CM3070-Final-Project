@@ -2,17 +2,14 @@ import time
 import numpy as np
 import gym
 import psutil  # For monitoring system resources
-from fsm_controller import *
+from fsm_controller import fsm_control_loop  # Import the FSM control loop
 from gym.envs.registration import register
-import matplotlib.pyplot as plt
 import os
+from plot_results import plot_results  # Import the plot_results module
 
 env = gym.make('RocketLander-v0')
 
 def evaluate_fsm_stability_response_time_smoothness_and_time(num_episodes=100):
-    output_dir = os.path.join('plots', 'comparison', 'FSM')
-    os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
-    
     episodes = []
     max_deviations = []  # List to store the maximum deviations for each episode
     avg_deviations = []  # List to store the average deviations for each episode
@@ -63,75 +60,21 @@ def evaluate_fsm_stability_response_time_smoothness_and_time(num_episodes=100):
 
         episodes.append(episode)
 
-    # Plotting stability over episodes
-    plt.figure()
-    plt.plot(episodes, max_deviations, label='Max Angle Deviation', color='red')
-    plt.plot(episodes, avg_deviations, label='Average Angle Deviation', color='blue')
-    plt.title('Rocket Stability Over Episodes (FSM)')
-    plt.xlabel('Episode Number')
-    plt.ylabel('Angle Deviation (radians)')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'stability_max_avg_over_episodes.png'))
-    plt.show()
-
-    # Plotting response time over episodes
-    plt.figure()
-    plt.plot(episodes, max_response_times, label='Max Response Time', color='orange')
-    plt.plot(episodes, avg_response_times, label='Average Response Time', color='green')
-    plt.title('Rocket Response Time Over Episodes (FSM)')
-    plt.xlabel('Episode Number')
-    plt.ylabel('Response Time (seconds)')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'response_time_max_avg_over_episodes.png'))
-    plt.show()
-
-    # Plotting gimbal smoothness over episodes
-    plt.figure()
-    plt.plot(episodes, max_gimbal_smoothness, label='Max Gimbal Angle (Degrees)', color='purple')
-    plt.plot(episodes, avg_gimbal_smoothness, label='Average Change in Gimbal Angle (Degrees)', color='cyan')
-    plt.title('Rocket Gimbal Control Smoothness Over Episodes (FSM)')
-    plt.xlabel('Episode Number')
-    plt.ylabel('Change in Gimbal Angle (Degrees)')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'gimbal_smoothness_max_avg_over_episodes.png'))
-    plt.show()
-
-    # Plotting throttle smoothness over episodes
-    plt.figure()
-    plt.plot(episodes, max_throttle_smoothness, label='Max Throttle Setting', color='brown')
-    plt.plot(episodes, avg_throttle_smoothness, label='Average Change in Throttle Setting', color='orange')
-    plt.title('Rocket Throttle Control Smoothness Over Episodes (FSM)')
-    plt.xlabel('Episode Number')
-    plt.ylabel('Change in Throttle Setting')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'throttle_smoothness_max_avg_over_episodes.png'))
-    plt.show()
-
-    # Plotting CPU usage over episodes
-    plt.figure()
-    plt.plot(episodes, avg_cpu_usages, label='Average CPU Usage (%)', color='magenta')
-    plt.title('CPU Usage Over Episodes (FSM)')
-    plt.xlabel('Episode Number')
-    plt.ylabel('CPU Usage (%)')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'cpu_usage_over_episodes.png'))
-    plt.show()
-
-    # Plotting time taken to land over episodes
-    plt.figure()
-    plt.plot(episodes, time_taken_to_land, label='Time Taken to Land (seconds)', color='blue')
-    plt.title('Time Taken to Land Over Episodes (FSM)')
-    plt.xlabel('Episode Number')
-    plt.ylabel('Time Taken (seconds)')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'time_taken_to_land_over_episodes.png'))
-    plt.show()
+    # Use the plot_results function from the plot_results module
+    plot_results(
+        episodes=episodes,
+        max_deviations=max_deviations,
+        avg_deviations=avg_deviations,
+        max_response_times=max_response_times,
+        avg_response_times=avg_response_times,
+        max_gimbal_smoothness=max_gimbal_smoothness,
+        avg_gimbal_smoothness=avg_gimbal_smoothness,
+        max_throttle_smoothness=max_throttle_smoothness,
+        avg_throttle_smoothness=avg_throttle_smoothness,
+        avg_cpu_usages=avg_cpu_usages,
+        time_taken_to_land=time_taken_to_land,
+        model_type='FSM'  # Specify the model type as 'FSM'
+    )
 
 # Run the evaluation
 evaluate_fsm_stability_response_time_smoothness_and_time(100)  # Evaluate over 100 episodes
