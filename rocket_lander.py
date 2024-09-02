@@ -74,11 +74,6 @@ SHIP_HEIGHT = ROCKET_WIDTH
 SHIP_WIDTH = SHIP_HEIGHT * 40
 
 # VIEWPORT
-# VIEWPORT_H = 1440
-# VIEWPORT_W = 1008
-# H = 1.1 * START_HEIGHT * SCALE_S
-# W = float(VIEWPORT_W) / VIEWPORT_H * H
-
 # VIEWPORT smaller for viewability
 VIEWPORT_H = 720   # Adjusted height
 VIEWPORT_W = 504   # Adjusted width

@@ -8,6 +8,8 @@ from stable_baselines.common.vec_env import DummyVecEnv
 from gym.envs.registration import register
 from plot_results import plot_results  # Import the plot_results module
 from fsm_controller import get_current_state  # Import the state extraction function
+import io
+import sys
 
 # Register the RocketLander environment
 register(
@@ -41,6 +43,7 @@ def evaluate_ppo_model(num_episodes=100):
     avg_throttle_settings = []  # List to store the average throttle settings for each episode
     avg_cpu_usages = []  # List to store average CPU usage for each episode
     time_taken_to_land = []  # List to store the time taken to land in seconds for each episode
+    landing_successes = []  # List to store landing success for each episode
 
     angle_threshold = 0.1  # Threshold to detect a significant deviation event
     correction_threshold = 0.02  # Threshold to consider the angle corrected
@@ -56,6 +59,11 @@ def evaluate_ppo_model(num_episodes=100):
         start_correction_time = None
         start_time = time.time()  # Start timing the episode
         process = psutil.Process()  # Start monitoring the process
+        landed = False  # Flag to track if the rocket has landed successfully
+
+        # Capture the standard output
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
 
         while not done:
             dt = 1.0 / env.envs[0].metadata['video.frames_per_second']
@@ -90,6 +98,19 @@ def evaluate_ppo_model(num_episodes=100):
             action, _states = model.predict(obs)
 
             obs, reward, done, info = env.step(action)
+
+            # Capture the output
+            output = sys.stdout.getvalue()
+
+            # Check for landing success in the captured output
+            if "LANDED!!!!!!!!!" in output:
+                landed = True
+
+        # Restore the standard output
+        sys.stdout = old_stdout
+
+        # Record landing success
+        landing_successes.append(landed)
 
         # Record the max and average deviations for the episode
         max_deviation = max(episode_deviations)
@@ -153,8 +174,10 @@ def evaluate_ppo_model(num_episodes=100):
         avg_throttle_smoothness=avg_throttle_settings,  # Separate average throttle settings
         avg_cpu_usages=avg_cpu_usages,
         time_taken_to_land=time_taken_to_land,
-        model_type='PPO'  # Specify the model type as 'PPO'
+        model_type='PPO',  # Specify the model type as 'PPO'
+        landing_successes=landing_successes  # Include landing successes in the plot
     )
 
 # Run the evaluation
 evaluate_ppo_model(100)  # Evaluate over 100 episodes
+

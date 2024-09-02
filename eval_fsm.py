@@ -6,6 +6,8 @@ from fsm_controller import fsm_control_loop  # Import the FSM control loop
 from gym.envs.registration import register
 import os
 from plot_results import plot_results  # Import the plot_results module
+import io
+import sys
 
 env = gym.make('RocketLander-v0')
 
@@ -21,14 +23,33 @@ def evaluate_fsm_stability_response_time_smoothness_and_time(num_episodes=100):
     avg_throttle_smoothness = []  # List to store the average throttle changes for each episode
     avg_cpu_usages = []  # List to store average CPU usage for each episode
     time_taken_to_land = []  # List to store the time taken to land in seconds for each episode
+    landing_successes = []  # List to store landing success for each episode
 
     for episode in range(num_episodes):
         obs = env.reset()
         start_time = time.time()  # Start timing the episode
         process = psutil.Process()  # Start monitoring the process
+        landed = False  # Flag to track if the rocket has landed successfully
+
+        # Capture the standard output
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
 
         # Run the FSM control loop
         final_obs, total_reward, metrics, done = fsm_control_loop(env, render=False)
+
+        # Capture the output
+        output = sys.stdout.getvalue()
+
+        # Check for landing success in the captured output
+        if "LANDED!!!!!!!!!" in output:
+            landed = True
+
+        # Restore the standard output
+        sys.stdout = old_stdout
+
+        # Record landing success
+        landing_successes.append(landed)
 
         # Analyze the results
         max_deviation = max(metrics['deviations']) if metrics['deviations'] else 0
@@ -73,8 +94,10 @@ def evaluate_fsm_stability_response_time_smoothness_and_time(num_episodes=100):
         avg_throttle_smoothness=avg_throttle_smoothness,
         avg_cpu_usages=avg_cpu_usages,
         time_taken_to_land=time_taken_to_land,
-        model_type='FSM'  # Specify the model type as 'FSM'
+        model_type='FSM',  # Specify the model type as 'FSM'
+        landing_successes=landing_successes  # Include landing successes in the plot
     )
 
 # Run the evaluation
 evaluate_fsm_stability_response_time_smoothness_and_time(100)  # Evaluate over 100 episodes
+

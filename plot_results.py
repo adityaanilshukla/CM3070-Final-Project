@@ -3,7 +3,7 @@ import os
 
 def plot_results(episodes, max_deviations, avg_deviations, max_response_times, avg_response_times,
                  max_gimbal_smoothness, avg_gimbal_smoothness, max_throttle_smoothness,
-                 avg_throttle_smoothness, avg_cpu_usages, time_taken_to_land, model_type):
+                 avg_throttle_smoothness, avg_cpu_usages, time_taken_to_land, model_type, landing_successes):
     """
     Plot the results of the evaluation for either PPO or FSM models.
 
@@ -20,6 +20,7 @@ def plot_results(episodes, max_deviations, avg_deviations, max_response_times, a
     - avg_cpu_usages: List of average CPU usage percentages per episode.
     - time_taken_to_land: List of time taken to land per episode.
     - model_type: String specifying the model type ('PPO' or 'FSM').
+    - landing_successes: List of boolean values indicating success (True) or failure (False) for each episode.
     """
 
     output_dir = os.path.join('plots', 'comparison', model_type)
@@ -98,5 +99,19 @@ def plot_results(episodes, max_deviations, avg_deviations, max_response_times, a
     plt.grid(True)
     plt.legend()
     plt.savefig(os.path.join(output_dir, 'time_taken_to_land_over_episodes.png'))
+    plt.show()
+
+    # Plotting landing successes and failures
+    success_count = sum(landing_successes)
+    failure_count = len(landing_successes) - success_count
+
+    plt.figure()
+    plt.bar(['Successes', 'Failures'], [success_count, failure_count], color=['green', 'red'])
+    plt.title(f'Landing Successes vs Failures {title_suffix}')
+    plt.ylabel('Number of Episodes')
+    plt.text(0, success_count + 0.5, f'Successes: {success_count}', ha='center', va='bottom')
+    plt.text(1, failure_count + 0.5, f'Failures: {failure_count}', ha='center', va='bottom')
+    plt.grid(True)
+    plt.savefig(os.path.join(output_dir, 'landing_successes_vs_failures.png'))
     plt.show()
 
