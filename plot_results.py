@@ -40,126 +40,144 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
     min_label_prefix = 'Min'
 
     # Plotting stability over episodes
-    plt.figure()
-    plt.plot(episodes, max_deviations, label=f'{max_label_prefix} Angle Deviation Used During Episode', color='red')
-    plt.plot(episodes, avg_deviations, label=f'{avg_label_prefix} Angle Deviation', color='blue')
-    plt.plot(episodes, min_deviations, label=f'{min_label_prefix} Angle Deviation Used During Episode', color='green')
-    plt.title(f'Rocket Stability {title_suffix}')
-    plt.xlabel('Episode Number')
-    plt.ylabel('Angle Deviation (radians)')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'stability_max_avg_min_over_episodes.png'))
+    if max_deviations:
+        plt.figure()
+        plt.plot(episodes, max_deviations, label=f'{max_label_prefix} Angle Deviation Used During Episode', color='red')
+        plt.plot(episodes, avg_deviations, label=f'{avg_label_prefix} Angle Deviation', color='blue')
+        plt.plot(episodes, min_deviations, label=f'{min_label_prefix} Angle Deviation Used During Episode', color='green')
+        plt.title(f'Rocket Stability {title_suffix}')
+        plt.xlabel('Episode Number')
+        plt.ylabel('Angle Deviation (radians)')
+        plt.grid(True)
+        plt.legend()
+        # Adjust the plot layout to make space for the stats box
+        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
 
-    # Adding statistics box
-    stats_text = (f'Mean: {np.mean(avg_deviations):.2f}\n'
-                  f'Standard Deviation: {np.std(avg_deviations):.2f}\n'
-                  f'Variance: {np.var(avg_deviations):.2f}')
-    plt.gcf().text(0.15, 0.7, stats_text, bbox=dict(facecolor='white', alpha=0.5))
-    plt.show()
+        # Adding statistics box
+        stats_text = (f'Mean: {np.mean(avg_deviations):.2f}\n'
+                      f'Standard Deviation: {np.std(avg_deviations):.2f}\n'
+                      f'Variance: {np.var(avg_deviations):.2f}')
+        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.savefig(os.path.join(output_dir, 'stability_max_avg_min_over_episodes.png'))
+        plt.close()
 
     # Plotting response time over episodes
-    plt.figure()
-    plt.plot(episodes, max_response_times, label=f'{max_label_prefix} Response Time Used During Episode', color='orange')
-    plt.plot(episodes, avg_response_times, label=f'{avg_label_prefix} Response Time', color='green')
-    plt.plot(episodes, min_response_times, label=f'{min_label_prefix} Response Time Used During Episode', color='blue')
-    plt.title(f'Rocket Response Time {title_suffix}')
-    plt.xlabel('Episode Number')
-    plt.ylabel('Response Time (seconds)')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'response_time_max_avg_min_over_episodes.png'))
+    if max_response_times:
+        plt.figure()
+        plt.plot(episodes, max_response_times, label=f'{max_label_prefix} Response Time Used During Episode', color='orange')
+        plt.plot(episodes, avg_response_times, label=f'{avg_label_prefix} Response Time', color='green')
+        plt.plot(episodes, min_response_times, label=f'{min_label_prefix} Response Time Used During Episode', color='blue')
+        plt.title(f'Rocket Response Time {title_suffix}')
+        plt.xlabel('Episode Number')
+        plt.ylabel('Response Time (seconds)')
+        plt.grid(True)
+        plt.legend()
+        # Adjust the plot layout to make space for the stats box
+        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
 
-    # Adding statistics box
-    stats_text = (f'Mean: {np.mean(avg_response_times):.2f}\n'
-                  f'Standard Deviation: {np.std(avg_response_times):.2f}\n'
-                  f'Variance: {np.var(avg_response_times):.2f}')
-    plt.gcf().text(0.15, 0.7, stats_text, bbox=dict(facecolor='white', alpha=0.5))
-    plt.show()
+        # Adding statistics box
+        stats_text = (f'Mean: {np.mean(avg_response_times):.2f}\n'
+                      f'Standard Deviation: {np.std(avg_response_times):.2f}\n'
+                      f'Variance: {np.var(avg_response_times):.2f}')
+        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.savefig(os.path.join(output_dir, 'response_time_max_avg_min_over_episodes.png'))
+        plt.close()
 
     # Plotting gimbal smoothness over episodes
-    plt.figure()
-    plt.plot(episodes, max_gimbal_smoothness, label=f'{max_label_prefix} Gimbal Angle Used During Episode (radians)', color='purple')
-    plt.plot(episodes, avg_gimbal_smoothness, label=f'{avg_label_prefix} Change in Gimbal Angle (radians)', color='cyan')
-    plt.plot(episodes, min_gimbal_smoothness, label=f'{min_label_prefix} Gimbal Angle Used During Episode (radians)', color='green')
-    plt.title(f'Rocket Gimbal Control Smoothness {title_suffix}')
-    plt.xlabel('Episode Number')
-    plt.ylabel('Change in Gimbal Angle (radians)')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'gimbal_smoothness_max_avg_min_over_episodes.png'))
+    if max_gimbal_smoothness:
+        plt.figure()
+        plt.plot(episodes, max_gimbal_smoothness, label=f'{max_label_prefix} Gimbal Angle Used During Episode (radians)', color='purple')
+        plt.plot(episodes, avg_gimbal_smoothness, label=f'{avg_label_prefix} Change in Gimbal Angle (radians)', color='cyan')
+        plt.plot(episodes, min_gimbal_smoothness, label=f'{min_label_prefix} Gimbal Angle Used During Episode (radians)', color='green')
+        plt.title(f'Rocket Gimbal Control Smoothness {title_suffix}')
+        plt.xlabel('Episode Number')
+        plt.ylabel('Change in Gimbal Angle (radians)')
+        plt.grid(True)
+        plt.legend()
+        # Adjust the plot layout to make space for the stats box
+        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
 
-    # Adding statistics box
-    stats_text = (f'Mean: {np.mean(avg_gimbal_smoothness):.2f}\n'
-                  f'Standard Deviation: {np.std(avg_gimbal_smoothness):.2f}\n'
-                  f'Variance: {np.var(avg_gimbal_smoothness):.2f}')
-    plt.gcf().text(0.15, 0.7, stats_text, bbox=dict(facecolor='white', alpha=0.5))
-    plt.show()
+        # Adding statistics box
+        stats_text = (f'Mean: {np.mean(avg_gimbal_smoothness):.2f}\n'
+                      f'Standard Deviation: {np.std(avg_gimbal_smoothness):.2f}\n'
+                      f'Variance: {np.var(avg_gimbal_smoothness):.2f}')
+        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.savefig(os.path.join(output_dir, 'gimbal_smoothness_max_avg_min_over_episodes.png'))
+        plt.close()
 
     # Plotting throttle smoothness over episodes
-    plt.figure()
-    plt.plot(episodes, max_throttle_smoothness, label=f'{max_label_prefix} Throttle Setting Used During Episode', color='brown')
-    plt.plot(episodes, avg_throttle_smoothness, label=f'{avg_label_prefix} Change in Throttle Setting', color='orange')
-    plt.plot(episodes, min_throttle_smoothness, label=f'{min_label_prefix} Throttle Setting Used During Episode', color='green')
-    plt.title(f'Rocket Throttle Control Smoothness {title_suffix}')
-    plt.xlabel('Episode Number')
-    plt.ylabel('Change in Throttle Setting')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'throttle_smoothness_max_avg_min_over_episodes.png'))
+    if max_throttle_smoothness:
+        plt.figure()
+        plt.plot(episodes, max_throttle_smoothness, label=f'{max_label_prefix} Throttle Setting Used During Episode', color='brown')
+        plt.plot(episodes, avg_throttle_smoothness, label=f'{avg_label_prefix} Change in Throttle Setting', color='orange')
+        plt.plot(episodes, min_throttle_smoothness, label=f'{min_label_prefix} Throttle Setting Used During Episode', color='green')
+        plt.title(f'Rocket Throttle Control Smoothness {title_suffix}')
+        plt.xlabel('Episode Number')
+        plt.ylabel('Change in Throttle Setting')
+        plt.grid(True)
+        plt.legend()
+        # Adjust the plot layout to make space for the stats box
+        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
 
-    # Adding statistics box
-    stats_text = (f'Mean: {np.mean(avg_throttle_smoothness):.2f}\n'
-                  f'Standard Deviation: {np.std(avg_throttle_smoothness):.2f}\n'
-                  f'Variance: {np.var(avg_throttle_smoothness):.2f}')
-    plt.gcf().text(0.15, 0.7, stats_text, bbox=dict(facecolor='white', alpha=0.5))
-    plt.show()
+        # Adding statistics box
+        stats_text = (f'Mean: {np.mean(avg_throttle_smoothness):.2f}\n'
+                      f'Standard Deviation: {np.std(avg_throttle_smoothness):.2f}\n'
+                      f'Variance: {np.var(avg_throttle_smoothness):.2f}')
+        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.savefig(os.path.join(output_dir, 'throttle_smoothness_max_avg_min_over_episodes.png'))
+        plt.close()
 
     # Plotting CPU usage over episodes
-    plt.figure()
-    plt.plot(episodes, avg_cpu_usages, label='Average CPU Usage (%)', color='magenta')
-    plt.title(f'CPU Usage {title_suffix}')
-    plt.xlabel('Episode Number')
-    plt.ylabel('CPU Usage (%)')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'cpu_usage_over_episodes.png'))
+    if avg_cpu_usages: 
+        plt.figure()
+        plt.plot(episodes, avg_cpu_usages, label='Average CPU Usage (%)', color='magenta')
+        plt.title(f'CPU Usage {title_suffix}')
+        plt.xlabel('Episode Number')
+        plt.ylabel('CPU Usage (%)')
+        plt.grid(True)
+        plt.legend()
+        # Adjust the plot layout to make space for the stats box
+        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
 
-    # Adding statistics box
-    stats_text = (f'Mean: {np.mean(avg_cpu_usages):.2f}\n'
-                  f'Standard Deviation: {np.std(avg_cpu_usages):.2f}\n'
-                  f'Variance: {np.var(avg_cpu_usages):.2f}')
-    plt.gcf().text(0.15, 0.7, stats_text, bbox=dict(facecolor='white', alpha=0.5))
-    plt.show()
+        # Adding statistics box
+        stats_text = (f'Mean: {np.mean(avg_cpu_usages):.2f}\n'
+                      f'Standard Deviation: {np.std(avg_cpu_usages):.2f}\n'
+                      f'Variance: {np.var(avg_cpu_usages):.2f}')
+        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.savefig(os.path.join(output_dir, 'cpu_usage_over_episodes.png'))
+        plt.close()
 
     # Plotting time taken to land over episodes
-    plt.figure()
-    plt.plot(episodes, time_taken_to_land, label='Time Taken to Land (seconds)', color='blue')
-    plt.title(f'Time Taken to Land {title_suffix}')
-    plt.xlabel('Episode Number')
-    plt.ylabel('Time Taken (seconds)')
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'time_taken_to_land_over_episodes.png'))
+    if time_taken_to_land:
+        plt.figure()
+        plt.plot(episodes, time_taken_to_land, label='Time Taken to Land (seconds)', color='blue')
+        plt.title(f'Time Taken to Land {title_suffix}')
+        plt.xlabel('Episode Number')
+        plt.ylabel('Time Taken (seconds)')
+        plt.grid(True)
+        plt.legend()
+        # Adjust the plot layout to make space for the stats box
+        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
 
-    # Adding statistics box
-    stats_text = (f'Mean: {np.mean(time_taken_to_land):.2f}\n'
-                  f'Standard Deviation: {np.std(time_taken_to_land):.2f}\n'
-                  f'Variance: {np.var(time_taken_to_land):.2f}')
-    plt.gcf().text(0.15, 0.7, stats_text, bbox=dict(facecolor='white', alpha=0.5))
-    plt.show()
+        # Adding statistics box
+        stats_text = (f'Mean: {np.mean(time_taken_to_land):.2f}\n'
+                      f'Standard Deviation: {np.std(time_taken_to_land):.2f}\n'
+                      f'Variance: {np.var(time_taken_to_land):.2f}')
+        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.savefig(os.path.join(output_dir, 'time_taken_to_land_over_episodes.png'))
+        plt.close()
 
     # Plotting landing successes and failures
-    success_count = sum(landing_successes)
-    failure_count = len(landing_successes) - success_count
+    if landing_successes:
+        success_count = sum(landing_successes)
+        failure_count = len(landing_successes) - success_count
 
-    plt.figure()
-    plt.bar(['Successes', 'Failures'], [success_count, failure_count], color=['green', 'red'])
-    plt.title(f'Landing Successes vs Failures {title_suffix}')
-    plt.ylabel('Number of Episodes')
-    plt.text(0, success_count + 0.5, f'Successes: {success_count}', ha='center', va='bottom')
-    plt.text(1, failure_count + 0.5, f'Failures: {failure_count}', ha='center', va='bottom')
-    plt.grid(True)
-    plt.savefig(os.path.join(output_dir, 'landing_successes_vs_failures.png'))
-    plt.show()
+        plt.figure()
+        plt.bar(['Successes', 'Failures'], [success_count, failure_count], color=['green', 'red'])
+        plt.title(f'Landing Successes vs Failures {title_suffix}')
+        plt.ylabel('Number of Episodes')
+        plt.text(0, success_count + 0.5, f'Successes: {success_count}', ha='center', va='bottom')
+        plt.text(1, failure_count + 0.5, f'Failures: {failure_count}', ha='center', va='bottom')
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir, 'landing_successes_vs_failures.png'))
 
