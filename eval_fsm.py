@@ -18,17 +18,28 @@ def evaluate_fsm(num_episodes=100):
     max_deviations = []  # List to store the maximum deviations for each episode
     avg_deviations = []  # List to store the average deviations for each episode
     min_deviations = []  # List to store the minimum deviations for each episode
+    max_response_times = []  # List to store the maximum response times for each episode
+    avg_response_times = []  # List to store the average response times for each episode
+    min_response_times = []  # List to store the minimum response times for each episode
     max_throttle_smoothness = []  # List to store the maximum throttle settings for each episode
     avg_throttle_smoothness = []  # List to store the average throttle settings for each episode
     min_throttle_smoothness = []  # List to store the minimum throttle settings for each episode
     time_taken_to_land = []  # List to store the time taken to land in seconds for each episode
     landing_successes = []  # List to store landing success for each episode
 
+    angle_threshold = 0.1  # Threshold to detect a significant deviation event
+    correction_threshold = 0.02  # Threshold to consider the angle corrected
+
     for episode in range(num_episodes):
         obs = env.reset()
         start_time = time.time()  # Start timing the episode
         process = psutil.Process()  # Start monitoring the process
         landed = False  # Flag to track if the rocket has landed successfully
+        episode_response_times = []  # Track response times in this episode
+        episode_gimbal_smoothness = []
+        episode_deviations = []
+        episode_throttle_smoothness = []
+        start_correction_time = None  # Track the time to correct a deviation
 
         # Capture the standard output
         old_stdout = sys.stdout
@@ -49,14 +60,10 @@ def evaluate_fsm(num_episodes=100):
         landing_successes.append(landed)
 
         # Process flight data to calculate metrics
-        episode_gimbal_smoothness = []
-        episode_deviations = []
-        episode_throttle_smoothness = []
-
         for timestep_data in flight_data:
             state = timestep_data['state']
 
-            # Monitor gimbal angle (in radians) - NO abs() to capture both positive and negative values
+            # Monitor gimbal angle (in radians)
             gimbal_angle = state['gimbal']
             episode_gimbal_smoothness.append(gimbal_angle)
 
@@ -67,6 +74,16 @@ def evaluate_fsm(num_episodes=100):
             # Monitor throttle settings (absolute value since throttle can't be negative)
             throttle_setting = abs(state['throttle'])
             episode_throttle_smoothness.append(throttle_setting)
+
+            # Detect a significant deviation and start tracking correction time
+            if abs(angle_deviation) > angle_threshold and start_correction_time is None:
+                start_correction_time = time.time()
+
+            # Track response time (time taken to correct a deviation)
+            if start_correction_time is not None and abs(angle_deviation) <= correction_threshold:
+                response_time = time.time() - start_correction_time
+                episode_response_times.append(response_time)
+                start_correction_time = None  # Reset for next deviation
 
         # Record the max, min, and average gimbal angles for the episode
         max_gimbal_angle = max(episode_gimbal_smoothness) if episode_gimbal_smoothness else 0
@@ -92,6 +109,20 @@ def evaluate_fsm(num_episodes=100):
         min_throttle_smoothness.append(min_throttle_setting)
         avg_throttle_smoothness.append(avg_throttle_setting)
 
+        # Record the max, min, and average response times for the episode
+        if episode_response_times:
+            max_response_time = max(episode_response_times)
+            avg_response_time = np.mean(episode_response_times)
+            min_response_time = min(episode_response_times)
+        else:
+            max_response_time = 0
+            avg_response_time = 0
+            min_response_time = 0
+
+        max_response_times.append(max_response_time)
+        avg_response_times.append(avg_response_time)
+        min_response_times.append(min_response_time)
+
         # Record the time taken to land for the episode
         end_time = time.time()
         time_taken = end_time - start_time
@@ -111,14 +142,13 @@ def evaluate_fsm(num_episodes=100):
         max_throttle_smoothness=max_throttle_smoothness,
         avg_throttle_smoothness=avg_throttle_smoothness,
         min_throttle_smoothness=min_throttle_smoothness,
+        max_response_times=max_response_times,
+        avg_response_times=avg_response_times,
+        min_response_times=min_response_times,
         time_taken_to_land=time_taken_to_land,
         model_type='FSM',  # Specify the model type as 'FSM'
         landing_successes=landing_successes,
-        # Empty lists for unused plots
-        max_response_times=[],
-        avg_response_times=[],
-        min_response_times=[],
-        avg_cpu_usages=[]
+        avg_cpu_usages=[]  # Empty list for unused CPU usage plot
     )
 
 # Run the evaluation
