@@ -15,7 +15,7 @@ import sys
 register(
     id='RocketLander-v0',
     entry_point='rocket_lander:RocketLander',  # Adjust the path as needed
-    max_episode_steps=2500,
+    max_episode_steps=3000,
     reward_threshold=0,
 )
 

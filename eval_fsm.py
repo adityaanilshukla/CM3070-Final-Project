@@ -18,6 +18,9 @@ def evaluate_fsm(num_episodes=100):
     max_deviations = []  # List to store the maximum deviations for each episode
     avg_deviations = []  # List to store the average deviations for each episode
     min_deviations = []  # List to store the minimum deviations for each episode
+    max_throttle_smoothness = []  # List to store the maximum throttle settings for each episode
+    avg_throttle_smoothness = []  # List to store the average throttle settings for each episode
+    min_throttle_smoothness = []  # List to store the minimum throttle settings for each episode
     time_taken_to_land = []  # List to store the time taken to land in seconds for each episode
     landing_successes = []  # List to store landing success for each episode
 
@@ -48,6 +51,7 @@ def evaluate_fsm(num_episodes=100):
         # Process flight data to calculate metrics
         episode_gimbal_smoothness = []
         episode_deviations = []
+        episode_throttle_smoothness = []
 
         for timestep_data in flight_data:
             state = timestep_data['state']
@@ -59,6 +63,10 @@ def evaluate_fsm(num_episodes=100):
             # Monitor angle deviation (can be positive or negative, so no abs())
             angle_deviation = state['angle']
             episode_deviations.append(angle_deviation)
+
+            # Monitor throttle settings (absolute value since throttle can't be negative)
+            throttle_setting = abs(state['throttle'])
+            episode_throttle_smoothness.append(throttle_setting)
 
         # Record the max, min, and average gimbal angles for the episode
         max_gimbal_angle = max(episode_gimbal_smoothness) if episode_gimbal_smoothness else 0
@@ -76,6 +84,14 @@ def evaluate_fsm(num_episodes=100):
         min_deviations.append(min_deviation)
         avg_deviations.append(avg_deviation)
 
+        # Record the max, min, and average throttle settings for the episode
+        max_throttle_setting = max(episode_throttle_smoothness) if episode_throttle_smoothness else 0
+        min_throttle_setting = min(episode_throttle_smoothness) if episode_throttle_smoothness else 0
+        avg_throttle_setting = np.mean(episode_throttle_smoothness) if episode_throttle_smoothness else 0
+        max_throttle_smoothness.append(max_throttle_setting)
+        min_throttle_smoothness.append(min_throttle_setting)
+        avg_throttle_smoothness.append(avg_throttle_setting)
+
         # Record the time taken to land for the episode
         end_time = time.time()
         time_taken = end_time - start_time
@@ -92,6 +108,9 @@ def evaluate_fsm(num_episodes=100):
         max_deviations=max_deviations,
         avg_deviations=avg_deviations,
         min_deviations=min_deviations,
+        max_throttle_smoothness=max_throttle_smoothness,
+        avg_throttle_smoothness=avg_throttle_smoothness,
+        min_throttle_smoothness=min_throttle_smoothness,
         time_taken_to_land=time_taken_to_land,
         model_type='FSM',  # Specify the model type as 'FSM'
         landing_successes=landing_successes,
@@ -99,9 +118,6 @@ def evaluate_fsm(num_episodes=100):
         max_response_times=[],
         avg_response_times=[],
         min_response_times=[],
-        max_throttle_smoothness=[],
-        avg_throttle_smoothness=[],
-        min_throttle_smoothness=[],
         avg_cpu_usages=[]
     )
 

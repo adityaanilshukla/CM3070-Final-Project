@@ -7,7 +7,7 @@ from gym.envs.registration import register
 register(
     id='RocketLander-v0',
     entry_point='rocket_lander:RocketLander',
-    max_episode_steps=2500,
+    max_episode_steps=3000,
     reward_threshold=0,
 )
 
