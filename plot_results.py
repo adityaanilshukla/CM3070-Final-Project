@@ -51,13 +51,13 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.grid(True)
         plt.legend()
         # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(avg_deviations):.2f}\n'
                       f'Standard Deviation: {np.std(avg_deviations):.2f}\n'
                       f'Variance: {np.var(avg_deviations):.2f}')
-        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
         plt.savefig(os.path.join(output_dir, 'stability_max_avg_min_over_episodes.png'))
         plt.close()
 
@@ -73,13 +73,13 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.grid(True)
         plt.legend()
         # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(avg_response_times):.2f}\n'
                       f'Standard Deviation: {np.std(avg_response_times):.2f}\n'
                       f'Variance: {np.var(avg_response_times):.2f}')
-        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
         plt.savefig(os.path.join(output_dir, 'response_time_max_avg_min_over_episodes.png'))
         plt.close()
 
@@ -95,13 +95,13 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.grid(True)
         plt.legend()
         # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(avg_gimbal_smoothness):.2f}\n'
                       f'Standard Deviation: {np.std(avg_gimbal_smoothness):.2f}\n'
                       f'Variance: {np.var(avg_gimbal_smoothness):.2f}')
-        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
         plt.savefig(os.path.join(output_dir, 'gimbal_smoothness_max_avg_min_over_episodes.png'))
         plt.close()
 
@@ -117,13 +117,13 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.grid(True)
         plt.legend()
         # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(avg_throttle_smoothness):.2f}\n'
                       f'Standard Deviation: {np.std(avg_throttle_smoothness):.2f}\n'
                       f'Variance: {np.var(avg_throttle_smoothness):.2f}')
-        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
         plt.savefig(os.path.join(output_dir, 'throttle_smoothness_max_avg_min_over_episodes.png'))
         plt.close()
 
@@ -137,13 +137,13 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.grid(True)
         plt.legend()
         # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(avg_cpu_usages):.2f}\n'
                       f'Standard Deviation: {np.std(avg_cpu_usages):.2f}\n'
                       f'Variance: {np.var(avg_cpu_usages):.2f}')
-        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
         plt.savefig(os.path.join(output_dir, 'cpu_usage_over_episodes.png'))
         plt.close()
 
@@ -157,13 +157,13 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.grid(True)
         plt.legend()
         # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.73)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(time_taken_to_land):.2f}\n'
                       f'Standard Deviation: {np.std(time_taken_to_land):.2f}\n'
                       f'Variance: {np.var(time_taken_to_land):.2f}')
-        plt.gcf().text(0.73, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
         plt.savefig(os.path.join(output_dir, 'time_taken_to_land_over_episodes.png'))
         plt.close()
 
