@@ -148,7 +148,6 @@ def evaluate_fsm(num_episodes=100):
         time_taken_to_land=time_taken_to_land,
         model_type='FSM',  # Specify the model type as 'FSM'
         landing_successes=landing_successes,
-        avg_cpu_usages=[]  # Empty list for unused CPU usage plot
     )
 
 # Run the evaluation

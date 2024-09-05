@@ -45,7 +45,6 @@ def evaluate_ppo_model(num_episodes=100):
     max_throttle_settings = []  # List to store the maximum throttle settings for each episode
     avg_throttle_settings = []  # List to store the average throttle settings for each episode
     min_throttle_settings = []  # List to store the minimum throttle settings for each episode
-    avg_cpu_usages = []  # List to store average CPU usage for each episode
     time_taken_to_land = []  # List to store the time taken to land in seconds for each episode
     landing_successes = []  # List to store landing success for each episode
 
@@ -59,7 +58,6 @@ def evaluate_ppo_model(num_episodes=100):
         episode_response_times = []  # Track response times in this episode
         episode_gimbal_angles = []  # Track gimbal angles in this episode
         episode_throttle_settings = []  # Track throttle settings in this episode
-        cpu_usages = []  # Track CPU usage for the episode
         start_correction_time = None
         start_time = time.time()  # Start timing the episode
         process = psutil.Process()  # Start monitoring the process
@@ -72,9 +70,6 @@ def evaluate_ppo_model(num_episodes=100):
         while not done:
             dt = 1.0 / env.envs[0].metadata['video.frames_per_second']
             current_state = get_current_state(obs[0])  # Extract state variables
-
-            # Monitor CPU usage
-            cpu_usages.append(process.cpu_percent(interval=None))  # CPU usage in percentage
 
             # Calculate angle deviation from 0 (stability)
             angle_deviation = abs(current_state['angle'])  # Use angle from the state
@@ -166,9 +161,6 @@ def evaluate_ppo_model(num_episodes=100):
         avg_throttle_settings.append(avg_throttle_setting)
         min_throttle_settings.append(min_throttle_setting)
 
-        # Record the average CPU usage for the episode
-        avg_cpu_usages.append(np.mean(cpu_usages))
-
         # Record the time taken to land for the episode
         end_time = time.time()
         time_taken = end_time - start_time
@@ -191,7 +183,6 @@ def evaluate_ppo_model(num_episodes=100):
         max_throttle_smoothness=max_throttle_settings,  # Separate throttle settings
         avg_throttle_smoothness=avg_throttle_settings,  # Separate average throttle settings
         min_throttle_smoothness=min_throttle_settings,  # Separate minimum throttle settings
-        avg_cpu_usages=avg_cpu_usages,
         time_taken_to_land=time_taken_to_land,
         model_type='PPO',  # Specify the model type as 'PPO'
         landing_successes=landing_successes  # Include landing successes in the plot

@@ -6,7 +6,7 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
                  max_response_times, avg_response_times, min_response_times,
                  max_gimbal_smoothness, avg_gimbal_smoothness, min_gimbal_smoothness,
                  max_throttle_smoothness, avg_throttle_smoothness, min_throttle_smoothness,
-                 avg_cpu_usages, time_taken_to_land, model_type, landing_successes):
+                 time_taken_to_land, model_type, landing_successes):
     """
     Plot the results of the evaluation for either PPO or FSM models.
 
@@ -24,7 +24,6 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
     - max_throttle_smoothness: List of maximum throttle changes per episode.
     - avg_throttle_smoothness: List of average throttle changes per episode.
     - min_throttle_smoothness: List of minimum throttle changes per episode.
-    - avg_cpu_usages: List of average CPU usage percentages per episode.
     - time_taken_to_land: List of time taken to land per episode.
     - model_type: String specifying the model type ('PPO' or 'FSM').
     - landing_successes: List of boolean values indicating success (True) or failure (False) for each episode.
@@ -125,26 +124,6 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
                       f'Variance: {np.var(avg_throttle_smoothness):.2f}')
         plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
         plt.savefig(os.path.join(output_dir, 'throttle_smoothness_max_avg_min_over_episodes.png'))
-        plt.close()
-
-    # Plotting CPU usage over episodes
-    if avg_cpu_usages: 
-        plt.figure()
-        plt.plot(episodes, avg_cpu_usages, label='Average CPU Usage (%)', color='magenta')
-        plt.title(f'CPU Usage {title_suffix}')
-        plt.xlabel('Episode Number')
-        plt.ylabel('CPU Usage (%)')
-        plt.grid(True)
-        plt.legend()
-        # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
-
-        # Adding statistics box
-        stats_text = (f'Mean: {np.mean(avg_cpu_usages):.2f}\n'
-                      f'Standard Deviation: {np.std(avg_cpu_usages):.2f}\n'
-                      f'Variance: {np.var(avg_cpu_usages):.2f}')
-        plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
-        plt.savefig(os.path.join(output_dir, 'cpu_usage_over_episodes.png'))
         plt.close()
 
     # Plotting time taken to land over episodes
