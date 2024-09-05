@@ -1,15 +1,14 @@
 import gym
 import os
-import numpy as np
 from stable_baselines import PPO2
-from stable_baselines.common.vec_env import DummyVecEnv
 from gym.envs.registration import register
+from fsm_controller import get_current_state  # Import the state extraction function
 
 # Register the RocketLander environment
 register(
     id='RocketLander-v0',
     entry_point='rocket_lander:RocketLander',  # Adjust the path as needed
-    max_episode_steps=2500,
+    max_episode_steps=3000,
     reward_threshold=0,
 )
 
@@ -23,17 +22,49 @@ model_path = os.path.join("model", "ppo2_RocketLander-v0_2024-08-02024338_step_1
 model = PPO2.load(model_path)
 
 # Create the environment
-env = DummyVecEnv([make_env])
+env = make_env()
 
-# Run the model in the environment
-obs = env.reset()
-done = False
-step = 0
-while not done:
-    action, _states = model.predict(obs)
-    obs, reward, done, info = env.step(action)
-    env.render()
-    if step%100==0:
-        print("x: {:.2f}, y: {:.2f}, angle: {:.2f}, leg1_contact: {}, leg2_contact: {}, throttle: {:.2f}, gimbal: {:.2f}, vx: {:.2f}, vy: {:.2f}, v_angle: {:.2f}".format(*obs[0]))
-    step += 1
-env.close()
+def run_ppo_model(env, model, render=False):
+    """
+    Run the PPO model in the RocketLander environment and return flight data.
+
+    Parameters:
+    - env: The RocketLander environment
+    - model: The trained PPO model
+    - render: Boolean flag to indicate whether to render the environment
+
+    Returns:
+    - flight_data: A list of state variables at each step
+    - done: Boolean flag indicating if the episode is finished
+    """
+    obs = env.reset()
+    done = False
+    step = 0
+    flight_data = []  # To store the state variables at each step
+
+    while not done:
+        action, _states = model.predict(obs)
+        obs, reward, done, info = env.step(action)
+
+        # Extract current state variables using get_current_state
+        try:
+            current_state = get_current_state(obs)  # No [0] index
+        except IndexError:
+            current_state = {}  # Handle case where state cannot be extracted
+
+        # Append the state variables to flight_data if state is not empty
+        if current_state:
+            flight_data.append(current_state)
+
+        # Render the environment based on the render flag
+        if render:
+            env.render()
+
+        step += 1
+
+    env.close()
+
+    return flight_data, done
+
+# Run the PPO model
+flight_data, done = run_ppo_model(env, model, render=True)

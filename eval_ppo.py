@@ -71,24 +71,24 @@ def evaluate_ppo_model(num_episodes=100):
             dt = 1.0 / env.envs[0].metadata['video.frames_per_second']
             current_state = get_current_state(obs[0])  # Extract state variables
 
-            # Calculate angle deviation from 0 (stability)
-            angle_deviation = abs(current_state['angle'])  # Use angle from the state
+            # Use the actual angle deviation values (not absolute)
+            angle_deviation = current_state['angle']
             episode_deviations.append(angle_deviation)
 
-            # Monitor gimbal angle (in radians)
-            gimbal_angle = abs(current_state['gimbal'])  # Use gimbal from the state
+            # Use the actual gimbal values (not absolute)
+            gimbal_angle = current_state['gimbal']
             episode_gimbal_angles.append(gimbal_angle)
 
             # Monitor throttle settings
-            throttle_setting = current_state['throttle']  # Use throttle from the state
+            throttle_setting = current_state['throttle']
             episode_throttle_settings.append(throttle_setting)
 
             # Detect a significant deviation
-            if angle_deviation > angle_threshold and start_correction_time is None:
+            if abs(angle_deviation) > angle_threshold and start_correction_time is None:
                 start_correction_time = time.time()
 
             # If a correction is ongoing and the angle is back within the correction threshold
-            if start_correction_time is not None and angle_deviation <= correction_threshold:
+            if start_correction_time is not None and abs(angle_deviation) <= correction_threshold:
                 response_time = time.time() - start_correction_time
                 episode_response_times.append(response_time)
                 start_correction_time = None  # Reset for the next deviation
@@ -190,4 +190,3 @@ def evaluate_ppo_model(num_episodes=100):
 
 # Run the evaluation
 evaluate_ppo_model(100)  # Evaluate over 100 episodes
-
