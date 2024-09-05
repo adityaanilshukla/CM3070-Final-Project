@@ -1,8 +1,7 @@
 import time
 import numpy as np
 from plot_results import plot_results  # Import the plot_results module
-from fsm_controller import get_current_state  # Import the state extraction function
-from ppo_controller import *
+from ppo_controller import * 
 import io
 import sys
 
@@ -22,6 +21,7 @@ def evaluate_ppo_model(num_episodes=100):
     min_throttle_smoothness = []  # List to store the minimum throttle settings for each episode
     time_taken_to_land = []  # List to store the time taken to land in seconds for each episode
     landing_successes = []  # List to store landing success for each episode
+    x_landing_precision = []  # List to store the x-axis landing precision for each episode
 
     angle_threshold = 0.1  # Threshold to detect a significant deviation event
     correction_threshold = 0.02  # Threshold to consider the angle corrected
@@ -40,11 +40,7 @@ def evaluate_ppo_model(num_episodes=100):
         old_stdout = sys.stdout
         sys.stdout = io.StringIO()
 
-        # Capture the standard output
-        old_stdout = sys.stdout
-        sys.stdout = io.StringIO()
-    
-        # Run the ppo control loop and gather flight data for every time step
+        # Run the PPO control loop and gather flight data for every time step
         flight_data, done = run_ppo_model(env, model, render=False)
 
         # Capture the output and check for landing success
@@ -80,6 +76,10 @@ def evaluate_ppo_model(num_episodes=100):
                 response_time = time.time() - start_correction_time
                 episode_response_times.append(response_time)
                 start_correction_time = None  # Reset for next deviation
+
+        # Record x-axis landing precision at the end of the flight
+        x_position_at_landing = flight_data[-1]['state']['x']  # Assuming the x position is at flight_data[-1]['state']['x']
+        x_landing_precision.append(x_position_at_landing)
 
         # Record the max, min, and average gimbal angles for the episode
         max_gimbal_angle = max(episode_gimbal_smoothness) if episode_gimbal_smoothness else 0
@@ -124,6 +124,9 @@ def evaluate_ppo_model(num_episodes=100):
         time_taken = end_time - start_time
         time_taken_to_land.append(time_taken)
 
+        # Record landing success
+        landing_successes.append(landed)
+
         episodes.append(episode)
 
     # Generate the relevant plots
@@ -142,7 +145,8 @@ def evaluate_ppo_model(num_episodes=100):
         avg_response_times=avg_response_times,
         min_response_times=min_response_times,
         time_taken_to_land=time_taken_to_land,
-        model_type='PPO',  # Specify the model type as 'FSM'
+        x_landing_precision=x_landing_precision,  # Include x-axis landing precision
+        model_type='PPO',  # Specify the model type as 'PPO'
         landing_successes=landing_successes,
     )
 

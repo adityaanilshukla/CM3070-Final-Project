@@ -6,7 +6,7 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
                  max_response_times, avg_response_times, min_response_times,
                  max_gimbal_smoothness, avg_gimbal_smoothness, min_gimbal_smoothness,
                  max_throttle_smoothness, avg_throttle_smoothness, min_throttle_smoothness,
-                 time_taken_to_land, model_type, landing_successes):
+                 time_taken_to_land, model_type, landing_successes, x_landing_precision):
     """
     Plot the results of the evaluation for either PPO or FSM models.
 
@@ -27,6 +27,7 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
     - time_taken_to_land: List of time taken to land per episode.
     - model_type: String specifying the model type ('PPO' or 'FSM').
     - landing_successes: List of boolean values indicating success (True) or failure (False) for each episode.
+    - x_landing_precision: List of x-axis positions at the end of each episode.
     """
 
     output_dir = os.path.join('plots', 'comparison', model_type)
@@ -49,8 +50,7 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.ylabel('Angle Deviation (radians)')
         plt.grid(True)
         plt.legend()
-        # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room for stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(avg_deviations):.2f}\n'
@@ -71,8 +71,7 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.ylabel('Response Time (seconds)')
         plt.grid(True)
         plt.legend()
-        # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room for stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(avg_response_times):.2f}\n'
@@ -93,8 +92,7 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.ylabel('Change in Gimbal Angle (radians)')
         plt.grid(True)
         plt.legend()
-        # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room for stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(avg_gimbal_smoothness):.2f}\n'
@@ -115,8 +113,7 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.ylabel('Change in Throttle Setting')
         plt.grid(True)
         plt.legend()
-        # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room for stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(avg_throttle_smoothness):.2f}\n'
@@ -135,8 +132,7 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.ylabel('Time Taken (seconds)')
         plt.grid(True)
         plt.legend()
-        # Adjust the plot layout to make space for the stats box
-        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room for stats box
 
         # Adding statistics box
         stats_text = (f'Mean: {np.mean(time_taken_to_land):.2f}\n'
@@ -144,6 +140,25 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
                       f'Variance: {np.var(time_taken_to_land):.2f}')
         plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
         plt.savefig(os.path.join(output_dir, 'time_taken_to_land_over_episodes.png'))
+        plt.close()
+
+    # Plotting x-axis landing precision over episodes
+    if x_landing_precision:
+        plt.figure()
+        plt.plot(episodes, x_landing_precision, label='X Landing Precision', color='magenta')
+        plt.title(f'X Landing Precision {title_suffix}')
+        plt.xlabel('Episode Number')
+        plt.ylabel('X Position at Landing (closeness to 0)')
+        plt.grid(True)
+        plt.legend()
+        plt.subplots_adjust(right=0.74)  # Make room for stats box
+
+        # Adding statistics box
+        stats_text = (f'Mean: {np.mean(x_landing_precision):.2f}\n'
+                      f'Standard Deviation: {np.std(x_landing_precision):.2f}\n'
+                      f'Variance: {np.var(x_landing_precision):.2f}')
+        plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.savefig(os.path.join(output_dir, 'x_landing_precision_over_episodes.png'))
         plt.close()
 
     # Plotting landing successes and failures
@@ -159,4 +174,4 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.text(1, failure_count + 0.5, f'Failures: {failure_count}', ha='center', va='bottom')
         plt.grid(True)
         plt.savefig(os.path.join(output_dir, 'landing_successes_vs_failures.png'))
-
+        plt.close()
