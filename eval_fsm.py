@@ -1,7 +1,6 @@
 import time
 import numpy as np
 import gym
-import psutil  # For monitoring system resources
 from fsm_controller import fsm_control_loop  # Import the FSM control loop
 import os
 from plot_results import plot_results  # Import the plot_results module
@@ -33,7 +32,6 @@ def evaluate_fsm(num_episodes=100):
     for episode in range(num_episodes):
         obs = env.reset()
         start_time = time.time()  # Start timing the episode
-        process = psutil.Process()  # Start monitoring the process
         landed = False  # Flag to track if the rocket has landed successfully
         episode_response_times = []  # Track response times in this episode
         episode_gimbal_smoothness = []
