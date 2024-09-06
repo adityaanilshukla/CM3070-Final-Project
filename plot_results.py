@@ -123,13 +123,14 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.xlabel('Episode Number')
         plt.ylabel('Change in Throttle Setting')
         plt.grid(True)
-        plt.legend()
+        # Adjust the font size of the legend and place it outside the plot area
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=12, frameon=False)
         # Adjust plot size to accommodate the legend and stats box
         plt.subplots_adjust(left=0.1, right=0.75, bottom=0.1, top=0.9)
-        # Adding statistics box
-        stats_text = (f'Mean: {np.mean(avg_throttle_smoothness):.2f}\n'
-                      f'Standard Deviation: {np.std(avg_throttle_smoothness):.2f}\n'
-                      f'Variance: {np.var(avg_throttle_smoothness):.2f}')
+        # Adding statistics box and placing it outside the plot, to the right
+        stats_text = (f'Mean: {np.mean(avg_deviations):.2f}\n'
+                       f'Standard Deviation: {np.std(avg_deviations):.2f}\n'
+                       f'Variance: {np.var(avg_deviations):.2f}')
         plt.gcf().text(0.77, 0.3, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
         # Save the image with a unique name
         plt.savefig(os.path.join(output_dir, 'throttle_smoothness_over_episodes.png'), bbox_inches='tight', dpi=300)

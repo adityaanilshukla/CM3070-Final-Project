@@ -8,25 +8,25 @@ import sys
 
 def evaluate_ppo_model(num_episodes=100):
     episodes = []
-    max_gimbal_smoothness = []  # List to store the maximum gimbal angles for each episode
-    avg_gimbal_smoothness = []  # List to store the average gimbal angles for each episode
-    min_gimbal_smoothness = []  # List to store the minimum gimbal angles for each episode
-    max_deviations = []  # List to store the maximum deviations for each episode
-    avg_deviations = []  # List to store the average deviations for each episode
-    min_deviations = []  # List to store the minimum deviations for each episode
-    max_response_times = []  # List to store the maximum response times for each episode
-    avg_response_times = []  # List to store the average response times for each episode
-    min_response_times = []  # List to store the minimum response times for each episode
-    max_throttle_smoothness = []  # List to store the maximum throttle settings for each episode
-    avg_throttle_smoothness = []  # List to store the average throttle settings for each episode
-    min_throttle_smoothness = []  # List to store the minimum throttle settings for each episode
-    time_taken_to_land = []  # List to store the time taken to land in seconds for each episode
-    landing_successes = []  # List to store landing success for each episode
-    x_landing_precision = []  # List to store the x-axis landing precision for each episode
+    max_gimbal_smoothness = []  
+    avg_gimbal_smoothness = []  
+    min_gimbal_smoothness = []  
+    max_deviations = []  
+    avg_deviations = []  
+    min_deviations = []  
+    max_response_times = []  
+    avg_response_times = []  
+    min_response_times = []  
+    max_throttle_smoothness = []  
+    avg_throttle_smoothness = []  
+    min_throttle_smoothness = []  
+    time_taken_to_land = []  
+    landing_successes = []  
+    x_landing_precision = []  
     ram_usage = []
 
-    angle_threshold = 0.1  # Threshold to detect a significant deviation event
-    correction_threshold = 0.02  # Threshold to consider the angle corrected
+    # Initialize action count dictionary (for actions 0 to 6)
+    action_counts = {i: 0 for i in range(7)}  # 0 to 6 mapped actions
 
     for episode in range(num_episodes):
         obs = env.reset()
@@ -43,8 +43,8 @@ def evaluate_ppo_model(num_episodes=100):
         old_stdout = sys.stdout
         sys.stdout = io.StringIO()
 
-        # Run the PPO control loop and gather flight data for every time step
-        flight_data, done = run_ppo_model(env, model, render=False)
+        # Run the PPO control loop and gather flight data and actions
+        flight_data, actions, done = run_ppo_model(env, model, render=False)
 
         # Capture the output and check for landing success
         output = sys.stdout.getvalue()
@@ -54,6 +54,9 @@ def evaluate_ppo_model(num_episodes=100):
         # Restore standard output
         sys.stdout = old_stdout
 
+        # Update action counts
+        for action in actions:
+            action_counts[action] += 1
 
         ram_usage.append(process.memory_info().rss / (1024 ** 2))
 
@@ -74,17 +77,17 @@ def evaluate_ppo_model(num_episodes=100):
             episode_throttle_smoothness.append(throttle_setting)
 
             # Detect a significant deviation and start tracking correction time
-            if abs(angle_deviation) > angle_threshold and start_correction_time is None:
+            if abs(angle_deviation) > 0.1 and start_correction_time is None:
                 start_correction_time = time.time()
 
             # Track response time (time taken to correct a deviation)
-            if start_correction_time is not None and abs(angle_deviation) <= correction_threshold:
+            if start_correction_time is not None and abs(angle_deviation) <= 0.02:
                 response_time = time.time() - start_correction_time
                 episode_response_times.append(response_time)
                 start_correction_time = None  # Reset for next deviation
 
         # Record x-axis landing precision at the end of the flight
-        x_position_at_landing = flight_data[-1]['state']['x']  # Assuming the x position is at flight_data[-1]['state']['x']
+        x_position_at_landing = flight_data[-1]['state']['x']  
         x_landing_precision.append(x_position_at_landing)
 
         # Record the max, min, and average gimbal angles for the episode
@@ -154,7 +157,8 @@ def evaluate_ppo_model(num_episodes=100):
         x_landing_precision=x_landing_precision,  # Include x-axis landing precision
         model_type='PPO',  # Specify the model type as 'PPO'
         landing_successes=landing_successes,
-        ram_usage=ram_usage  # Include RAM usage in the plot
+        ram_usage=ram_usage,  # Include RAM usage in the plot
+        action_counts=action_counts  # Pass the action counts for pie chart
     )
 
 # Run the evaluation

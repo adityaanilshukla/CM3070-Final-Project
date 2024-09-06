@@ -26,7 +26,7 @@ env = make_env()
 
 def run_ppo_model(env, model, render=False):
     """
-    Run the PPO model in the RocketLander environment and return flight data.
+    Run the PPO model in the RocketLander environment and return flight data and actions.
 
     Parameters:
     - env: The RocketLander environment
@@ -35,20 +35,24 @@ def run_ppo_model(env, model, render=False):
 
     Returns:
     - flight_data: A list of dictionaries containing 'state' and 'obs' at each step
+    - actions: A list of actions taken by the model during the episode
     - done: Boolean flag indicating if the episode is finished
     """
     obs = env.reset()
     done = False
     step = 0
     flight_data = []  # To store the state and observation at each step
+    actions = []  # To store the actions taken by the model
 
     while not done:
-        action, _states = model.predict(obs)
+        action, _states = model.predict(obs)  # Predict the next action using the model
+        actions.append(action)  # Store the action taken
+
         obs, reward, done, info = env.step(action)
 
         # Extract current state variables using get_current_state
         try:
-            current_state = get_current_state(obs)  # No [0] index
+            current_state = get_current_state(obs)
         except IndexError:
             current_state = {}  # Handle case where state cannot be extracted
 
@@ -67,4 +71,4 @@ def run_ppo_model(env, model, render=False):
 
     env.close()
 
-    return flight_data, done
+    return flight_data, actions, done
