@@ -207,43 +207,7 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.savefig(os.path.join(output_dir, 'ram_usage_over_episodes.png'), bbox_inches='tight', dpi=300)
         plt.close()
 
-    # if action_counts:
-    #     # Create a pie chart for action distribution (excluding action 6 - "no action")
-    #     total_actions = sum(action_counts[action] for action in range(6))  # Exclude action 6
-    #     if total_actions > 0:
-    #         action_labels = ['Gimbal Left', 'Gimbal Right', 'Throttle Up', 'Throttle Down',
-    #                          'First Control Thruster', 'Second Control Thruster']
-    #         action_values = [action_counts[action] for action in range(6)]
-    #
-    #         # Calculate the percentage breakdown of actions
-    #         action_percentages = [100 * value / total_actions for value in action_values]
-    #
-    #         # Define colors for each action
-    #         colors = plt.cm.Paired.colors[:6]  # Using a color palette with six colors
-    #         
-    #         # Create the pie chart without the labels
-    #         plt.figure()
-    #         wedges, _ = plt.pie(action_percentages, colors=colors, startangle=90)
-    #
-    #         # Create the legend and stats box
-    #         legend_labels = [f'{label}: {percent:.1f}%' for label, percent in zip(action_labels, action_percentages)]
-    #         
-    #         # Positioning the legend box
-    #         plt.legend(wedges, legend_labels, title="Actions", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-    #         
-    #         # Calculate the mean number of actions per episode (for actions 0 to 5)
-    #         mean_actions_per_episode = total_actions / len(episodes)
-    #         
-    #         # Adding statistics box
-    #         stats_text = (f'Mean number of actions per episode (excluding no action): {mean_actions_per_episode:.2f}')
-    #         plt.gcf().text(0.74, 0.2, stats_text, bbox=dict(facecolor='white', alpha=0.5))
-    #
-    #         # Save the pie chart
-    #         plt.title(f'Action Distribution {title_suffix}')
-    #         plt.savefig(os.path.join(output_dir, 'action_distribution_pie_chart.png'))
-    #         plt.close()
-    # 
-
+    # Plotting action distribution as a pie chart
     if action_counts:
         # Create a pie chart for action distribution (excluding action 6 - "no action")
         total_actions = sum(action_counts[action] for action in range(6))  # Exclude action 6
@@ -262,16 +226,16 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
             plt.figure(figsize=(16, 8))  # Match the figure size for consistency
             wedges, _ = plt.pie(action_percentages, colors=colors, startangle=90)
 
-            # Positioning the legend box outside the plot, on the right
+            # Positioning the legend box outside the plot, on the top right
             legend_labels = [f'{label}: {percent:.1f}%' for label, percent in zip(action_labels, action_percentages)]
-            plt.legend(wedges, legend_labels, title="Actions", loc="center left", bbox_to_anchor=(1, 0.5), fontsize=12, frameon=False)
+            plt.legend(wedges, legend_labels, title="Actions", loc="upper left", bbox_to_anchor=(0.9, 1), fontsize=12, frameon=False)
 
             # Calculate the mean number of actions per episode (for actions 0 to 5)
             mean_actions_per_episode = total_actions / len(episodes)
 
             # Adding statistics box and placing it outside the plot, to the right
-            stats_text = (f'Mean number of actions per episode (excluding no action): {mean_actions_per_episode:.2f}')
-            plt.gcf().text(0.77, 0.3, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
+            stats_text = (f'Mean number of actions per episode: {mean_actions_per_episode:.2f}')
+            plt.gcf().text(0.6, 0.3, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
 
             # Adjust plot size to accommodate the legend and stats box
             plt.subplots_adjust(left=0.1, right=0.75, bottom=0.1, top=0.9)
