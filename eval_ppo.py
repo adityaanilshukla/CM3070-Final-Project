@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import psutil
 from plot_results import plot_results  # Import the plot_results module
 from ppo_controller import * 
 import io
@@ -22,6 +23,7 @@ def evaluate_ppo_model(num_episodes=100):
     time_taken_to_land = []  # List to store the time taken to land in seconds for each episode
     landing_successes = []  # List to store landing success for each episode
     x_landing_precision = []  # List to store the x-axis landing precision for each episode
+    ram_usage = []
 
     angle_threshold = 0.1  # Threshold to detect a significant deviation event
     correction_threshold = 0.02  # Threshold to consider the angle corrected
@@ -29,6 +31,7 @@ def evaluate_ppo_model(num_episodes=100):
     for episode in range(num_episodes):
         obs = env.reset()
         start_time = time.time()  # Start timing the episode
+        process = psutil.Process()  # Track memory usage
         landed = False  # Flag to track if the rocket has landed successfully
         episode_response_times = []  # Track response times in this episode
         episode_gimbal_smoothness = []
@@ -50,6 +53,9 @@ def evaluate_ppo_model(num_episodes=100):
 
         # Restore standard output
         sys.stdout = old_stdout
+
+
+        ram_usage.append(process.memory_info().rss / (1024 ** 2))
 
         # Process flight data to calculate metrics
         for timestep_data in flight_data:
@@ -148,6 +154,7 @@ def evaluate_ppo_model(num_episodes=100):
         x_landing_precision=x_landing_precision,  # Include x-axis landing precision
         model_type='PPO',  # Specify the model type as 'PPO'
         landing_successes=landing_successes,
+        ram_usage=ram_usage  # Include RAM usage in the plot
     )
 
 # Run the evaluation

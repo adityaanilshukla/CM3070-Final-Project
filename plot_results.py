@@ -6,7 +6,8 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
                  max_response_times, avg_response_times, min_response_times,
                  max_gimbal_smoothness, avg_gimbal_smoothness, min_gimbal_smoothness,
                  max_throttle_smoothness, avg_throttle_smoothness, min_throttle_smoothness,
-                 time_taken_to_land, model_type, landing_successes, x_landing_precision):
+                 time_taken_to_land, model_type, landing_successes, x_landing_precision,
+                 ram_usage):
     """
     Plot the results of the evaluation for either PPO or FSM models.
 
@@ -28,7 +29,11 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
     - model_type: String specifying the model type ('PPO' or 'FSM').
     - landing_successes: List of boolean values indicating success (True) or failure (False) for each episode.
     - x_landing_precision: List of x-axis positions at the end of each episode.
+    - ram_usage: List of RAM usage per episode.
     """
+
+    output_dir = os.path.join('plots', 'comparison', model_type)
+    os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
     output_dir = os.path.join('plots', 'comparison', model_type)
     os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
@@ -174,4 +179,24 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.text(1, failure_count + 0.5, f'Failures: {failure_count}', ha='center', va='bottom')
         plt.grid(True)
         plt.savefig(os.path.join(output_dir, 'landing_successes_vs_failures.png'))
+        plt.close()
+
+    # Plotting RAM usage over episodes
+    if ram_usage:
+        plt.figure()
+        plt.plot(episodes, ram_usage, label='RAM Usage (MB)', color='magenta')
+        plt.title(f'RAM Usage {model_type} Over Episodes')
+        plt.xlabel('Episode Number')
+        plt.ylabel('RAM Usage (MB)')
+        plt.grid(True)
+        plt.legend()
+        # Adjust the plot layout to make space for the stats box
+        plt.subplots_adjust(right=0.74)  # Make room on the right for the stats box
+
+        # Adding statistics box
+        stats_text = (f'Mean: {np.mean(ram_usage):.2f} MB\n'
+                      f'Standard Deviation: {np.std(ram_usage):.2f} MB\n'
+                      f'Variance: {np.var(ram_usage):.2f} MB')
+        plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
+        plt.savefig(os.path.join(output_dir, 'ram_usage_over_episodes.png'))
         plt.close()
