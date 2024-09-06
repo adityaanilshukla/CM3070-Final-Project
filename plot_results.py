@@ -7,9 +7,10 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
                  max_gimbal_smoothness, avg_gimbal_smoothness, min_gimbal_smoothness,
                  max_throttle_smoothness, avg_throttle_smoothness, min_throttle_smoothness,
                  time_taken_to_land, model_type, landing_successes, x_landing_precision,
-                 ram_usage):
+                 ram_usage, action_counts):
     """
-    Plot the results of the evaluation for either PPO or FSM models.
+    Plot the results of the evaluation for either PPO or FSM models, including a pie chart
+    for the action distribution.
 
     Parameters:
     - episodes: List of episode numbers.
@@ -30,10 +31,8 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
     - landing_successes: List of boolean values indicating success (True) or failure (False) for each episode.
     - x_landing_precision: List of x-axis positions at the end of each episode.
     - ram_usage: List of RAM usage per episode.
+    - action_counts: Dictionary containing the count of each action (0 to 6).
     """
-
-    output_dir = os.path.join('plots', 'comparison', model_type)
-    os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
     output_dir = os.path.join('plots', 'comparison', model_type)
     os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
@@ -200,3 +199,39 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.gcf().text(0.74, 0.5, stats_text, bbox=dict(facecolor='white', alpha=0.5))  # Adjust position
         plt.savefig(os.path.join(output_dir, 'ram_usage_over_episodes.png'))
         plt.close()
+
+    if action_counts:
+        # Create a pie chart for action distribution (excluding action 6 - "no action")
+        total_actions = sum(action_counts[action] for action in range(6))  # Exclude action 6
+        if total_actions > 0:
+            action_labels = ['Gimbal Left', 'Gimbal Right', 'Throttle Up', 'Throttle Down',
+                             'First Control Thruster', 'Second Control Thruster']
+            action_values = [action_counts[action] for action in range(6)]
+
+            # Calculate the percentage breakdown of actions
+            action_percentages = [100 * value / total_actions for value in action_values]
+
+            # Define colors for each action
+            colors = plt.cm.Paired.colors[:6]  # Using a color palette with six colors
+            
+            # Create the pie chart without the labels
+            plt.figure()
+            wedges, _ = plt.pie(action_percentages, colors=colors, startangle=90)
+
+            # Create the legend and stats box
+            legend_labels = [f'{label}: {percent:.1f}%' for label, percent in zip(action_labels, action_percentages)]
+            
+            # Positioning the legend box
+            plt.legend(wedges, legend_labels, title="Actions", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+            
+            # Calculate the mean number of actions per episode (for actions 0 to 5)
+            mean_actions_per_episode = total_actions / len(episodes)
+            
+            # Adding statistics box
+            stats_text = (f'Mean number of actions per episode (excluding no action): {mean_actions_per_episode:.2f}')
+            plt.gcf().text(0.74, 0.2, stats_text, bbox=dict(facecolor='white', alpha=0.5))
+
+            # Save the pie chart
+            plt.title(f'Action Distribution {title_suffix}')
+            plt.savefig(os.path.join(output_dir, 'action_distribution_pie_chart.png'))
+            plt.close()

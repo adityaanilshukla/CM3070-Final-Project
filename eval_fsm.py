@@ -25,6 +25,9 @@ def evaluate_fsm(num_episodes=100):
     landing_successes = []
     x_landing_precision = []
     ram_usage = []
+    
+    # Initialize action count dictionary (for actions 0 to 6)
+    action_counts = {i: 0 for i in range(7)}  # 0 to 6 mapped actions
 
     for episode in range(num_episodes):
         # Reinitialize the environment for every episode
@@ -47,8 +50,8 @@ def evaluate_fsm(num_episodes=100):
         old_stdout = sys.stdout
         sys.stdout = io.StringIO()
 
-        # Run the FSM control loop and gather flight data for every time step
-        flight_data, done = fsm_control_loop(env, render=False)
+        # Run the FSM control loop and gather flight data and actions
+        flight_data, actions, done = fsm_control_loop(env, render=False)
 
         output = sys.stdout.getvalue()
         if "LANDED!!!!!!!!!" in output:
@@ -57,6 +60,10 @@ def evaluate_fsm(num_episodes=100):
         sys.stdout = old_stdout
 
         ram_usage.append(process.memory_info().rss / (1024 ** 2))
+
+        # Track action counts across the episode
+        for action in actions:
+            action_counts[action] += 1  # Increment the action count
 
         for timestep_data in flight_data:
             state = timestep_data['state']
@@ -124,9 +131,10 @@ def evaluate_fsm(num_episodes=100):
         episodes.append(episode)
 
         # Cleanup memory and force garbage collection
-        del flight_data, episode_gimbal_smoothness, episode_deviations, episode_throttle_smoothness, episode_response_times
+        del flight_data, actions, episode_gimbal_smoothness, episode_deviations, episode_throttle_smoothness, episode_response_times
         gc.collect()
 
+    # Plot results including the pie chart for action usage
     plot_results(
         episodes=episodes,
         max_gimbal_smoothness=max_gimbal_smoothness,
@@ -145,7 +153,8 @@ def evaluate_fsm(num_episodes=100):
         x_landing_precision=x_landing_precision,
         model_type='FSM',
         landing_successes=landing_successes,
-        ram_usage=ram_usage  # Include RAM usage in the plot
+        ram_usage=ram_usage,
+        action_counts=action_counts  # Pass the action counts to plot
     )
 
 # Run the evaluation

@@ -185,11 +185,13 @@ def fsm_control_loop(env, render=False):
 
     Returns:
     - flight_data: A list of dictionaries containing state variables for each timestep.
+    - actions: A list of actions taken at each timestep.
     - done: Boolean flag indicating if the episode is finished.
     """
     obs = env.reset()
     done = False
     flight_data = []  # Store the raw data from each timestep
+    actions = []  # Store the actions taken
 
     while not done:
         dt = 1.0 / env.metadata['video.frames_per_second']
@@ -207,23 +209,31 @@ def fsm_control_loop(env, render=False):
         if within_landing_zone(obs, dt):
             # Landing control logic
             throttle_action, thruster_action = land_rocket(obs, dt)
+
+            # Append actions to the actions list
+            actions.append(throttle_action)
+            actions.append(thruster_action)
+
             obs, reward, done, info = env.step(throttle_action)
             obs, reward, done, info = env.step(thruster_action)
         else:
             # Main control loop for non-landing zone
             gimbal_action = correct_angle(obs, dt)
+            actions.append(gimbal_action)
             obs, reward, done, info = env.step(gimbal_action)
 
             throttle_action = set_throttle(obs, dt)
+            actions.append(throttle_action)
             obs, reward, done, info = env.step(throttle_action)
 
             # Apply angle correction again for more aggressive control if moving toward landing zone
             if moving_toward_landing_zone(obs, dt):
                 gimbal_action = correct_angle(obs, dt)
+                actions.append(gimbal_action)
                 obs, reward, done, info = env.step(gimbal_action)
 
         # Render the environment if specified
         if render:
             env.render()
 
-    return flight_data, done
+    return flight_data, actions, done
