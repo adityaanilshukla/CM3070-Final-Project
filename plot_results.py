@@ -58,32 +58,40 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         # Adjust plot size to accommodate the legend and stats box
         plt.subplots_adjust(left=0.1, right=0.75, bottom=0.1, top=0.9)
         # Adding statistics box and placing it outside the plot, to the right
-        stats_text = (f'Mean: {np.mean(avg_deviations):.2f}\n'
-                       f'Standard Deviation: {np.std(avg_deviations):.2f}\n'
-                       f'Variance: {np.var(avg_deviations):.2f}')
+        # stats_text = (f'Mean: {np.mean(avg_deviations):.2f}\n'
+        #                f'Standard Deviation: {np.std(avg_deviations):.2f}\n'
+        #                f'Variance: {np.var(avg_deviations):.2f}')
+        # rewrite stats box to include radians as units
+        stats_text = (f'Mean: {np.mean(avg_deviations):.2f} rad\n'
+                      f'Standard Deviation: {np.std(avg_deviations):.2f} rad\n'
+                      f'Variance: {np.var(avg_deviations):.2f} rad²')
         plt.gcf().text(0.77, 0.3, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
         # Save the image with a unique name
         plt.savefig(os.path.join(output_dir, 'stability_over_episodes.png'), bbox_inches='tight', dpi=300)
         plt.close()
 
-    # Plotting response time over episodes
+    # Plotting response time over episodes (in microseconds)
     if max_response_times:
+        # Convert response times from seconds to microseconds
+        max_response_times_us = [time * 1e6 for time in max_response_times]
+        avg_response_times_us = [time * 1e6 for time in avg_response_times]
+        min_response_times_us = [time * 1e6 for time in min_response_times]
         plt.figure(figsize=(16, 8))  # Increase figure size for better readability
-        plt.plot(episodes, max_response_times, label=f'{max_label_prefix} Response Time Used During Episode', color='orange')
-        plt.plot(episodes, avg_response_times, label=f'{avg_label_prefix} Response Time', color='green')
-        plt.plot(episodes, min_response_times, label=f'{min_label_prefix} Response Time Used During Episode', color='blue')
+        plt.plot(episodes, max_response_times_us, label=f'{max_label_prefix} Response Time Used During Episode (µs)', color='orange')
+        plt.plot(episodes, avg_response_times_us, label=f'{avg_label_prefix} Response Time (µs)', color='green')
+        plt.plot(episodes, min_response_times_us, label=f'{min_label_prefix} Response Time Used During Episode (µs)', color='blue')
         plt.title(f'Rocket Response Time {title_suffix}', fontsize=16)
-        plt.xlabel('Episode Number')
-        plt.ylabel('Response Time (seconds)')
+        plt.xlabel('Episode Number', fontsize=14)
+        plt.ylabel('Response Time (microseconds)', fontsize=14)
         plt.grid(True)
         # Adjust the font size of the legend and place it outside the plot area
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=12, frameon=False)
         # Adjust plot size to accommodate the legend and stats box
         plt.subplots_adjust(left=0.1, right=0.75, bottom=0.1, top=0.9)
         # Adding statistics box and placing it outside the plot, to the right
-        stats_text = (f'Mean: {np.mean(avg_response_times):.2f}\n'
-                       f'Standard Deviation: {np.std(avg_response_times):.2f}\n'
-                       f'Variance: {np.var(avg_response_times):.2f}')
+        stats_text = (f'Mean: {np.mean(avg_response_times_us):.2f} µs\n'
+                      f'Standard Deviation: {np.std(avg_response_times_us):.2f} µs\n'
+                      f'Variance: {np.var(avg_response_times_us):.2f} µs²')
         plt.gcf().text(0.77, 0.3, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
         # Save the image with a unique name
         plt.savefig(os.path.join(output_dir, 'response_time_over_episodes.png'), bbox_inches='tight', dpi=300)
@@ -93,7 +101,7 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
     if max_gimbal_smoothness:
         plt.figure(figsize=(16, 8))  # Increase figure size for better readability
         plt.plot(episodes, max_gimbal_smoothness, label=f'{max_label_prefix} Gimbal Angle Used During Episode (radians)', color='purple')
-        plt.plot(episodes, avg_gimbal_smoothness, label=f'{avg_label_prefix} Change in Gimbal Angle (radians)', color='cyan')
+        plt.plot(episodes, avg_gimbal_smoothness, label=f'{avg_label_prefix} Change in Gimbal Angle (radians)', color='red')
         plt.plot(episodes, min_gimbal_smoothness, label=f'{min_label_prefix} Gimbal Angle Used During Episode (radians)', color='green')
         plt.title(f'Rocket Gimbal Control Smoothness {title_suffix}', fontsize=16)
         plt.xlabel('Episode Number')
@@ -103,11 +111,14 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=12, frameon=False)
         # Adjust plot size to accommodate the legend and stats box
         plt.subplots_adjust(left=0.1, right=0.75, bottom=0.1, top=0.9)
-
         # Adding statistics box and placing it outside the plot, to the right
-        stats_text = (f'Mean: {np.mean(avg_gimbal_smoothness):.2f}\n'
-                       f'Standard Deviation: {np.std(avg_gimbal_smoothness):.2f}\n'
-                       f'Variance: {np.var(avg_gimbal_smoothness):.2f}')
+        # stats_text = (f'Mean: {np.mean(avg_gimbal_smoothness):.2f}\n'
+        #                f'Standard Deviation: {np.std(avg_gimbal_smoothness):.2f}\n'
+        #                f'Variance: {np.var(avg_gimbal_smoothness):.2f}')
+        #rewrite stats box to include units in radians
+        stats_text = (f'Mean: {np.mean(avg_gimbal_smoothness):.2f} rad\n'
+                      f'Standard Deviation: {np.std(avg_gimbal_smoothness):.2f} rad\n'
+                      f'Variance: {np.var(avg_gimbal_smoothness):.2f} rad²')
         plt.gcf().text(0.77, 0.3, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
         # Save the image with a unique name
         plt.savefig(os.path.join(output_dir, 'gimbal_smoothness_over_episodes.png'), bbox_inches='tight', dpi=300)
@@ -136,21 +147,30 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.savefig(os.path.join(output_dir, 'throttle_smoothness_over_episodes.png'), bbox_inches='tight', dpi=300)
         plt.close()
 
-    # Plotting time taken to land over episodes
+    # Plotting time taken to land over episodes (in milliseconds)
     if time_taken_to_land:
-        plt.figure(figsize=(16, 8))
-        plt.plot(episodes, time_taken_to_land, label='Time Taken to Land (seconds)', color='blue')
+        # Convert time taken to land from seconds to milliseconds
+        time_taken_to_land_ms = [time * 1000 for time in time_taken_to_land]
+
+        plt.figure(figsize=(16, 8))  # Increase figure size for better readability
+        plt.plot(episodes, time_taken_to_land_ms, label='Time Taken to Land (milliseconds)', color='blue')
         plt.title(f'Time Taken to Land {title_suffix}', fontsize=16)
         plt.xlabel('Episode Number', fontsize=14)
-        plt.ylabel('Time Taken (seconds)', fontsize=14)
+        plt.ylabel('Time Taken (milliseconds)', fontsize=14)
         plt.grid(True)
+        
+        # Adjust the font size of the legend and place it outside the plot area
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=12, frameon=False)
+        
+        # Adjust plot size to accommodate the legend and stats box
         plt.subplots_adjust(left=0.1, right=0.75, bottom=0.1, top=0.9)
+
         # Adding statistics box and placing it outside the plot, to the right
-        stats_text = (f'Mean: {np.mean(time_taken_to_land):.2f}\n'
-                      f'Standard Deviation: {np.std(time_taken_to_land):.2f}\n'
-                      f'Variance: {np.var(time_taken_to_land):.2f}')
+        stats_text = (f'Mean: {np.mean(time_taken_to_land_ms):.2f} ms\n'
+                      f'Standard Deviation: {np.std(time_taken_to_land_ms):.2f} ms\n'
+                      f'Variance: {np.var(time_taken_to_land_ms):.2f} ms²')
         plt.gcf().text(0.77, 0.3, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
+
         # Save the image with a unique name
         plt.savefig(os.path.join(output_dir, 'time_taken_to_land_over_episodes.png'), bbox_inches='tight', dpi=300)
         plt.close()
@@ -165,14 +185,16 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.grid(True)
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=12, frameon=False)
         plt.subplots_adjust(left=0.1, right=0.75, bottom=0.1, top=0.9)
-        # Adding statistics box and placing it outside the plot, to the right
-        stats_text = (f'Mean: {np.mean(x_landing_precision):.2f}\n'
-                      f'Standard Deviation: {np.std(x_landing_precision):.2f}\n'
-                      f'Variance: {np.var(x_landing_precision):.2f}')
+
+        # Adding statistics box and placing it outside the plot, with unitless values
+        stats_text = (f'Mean: {np.mean(x_landing_precision):.2f} m\n'
+                      f'Standard Deviation: {np.std(x_landing_precision):.2f} m\n'
+                      f'Variance: {np.var(x_landing_precision):.2f} m²')
         plt.gcf().text(0.77, 0.3, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
+
         # Save the image with a unique name
         plt.savefig(os.path.join(output_dir, 'x_landing_precision_over_episodes.png'), bbox_inches='tight', dpi=300)
-        plt.close
+        plt.close()
 
     # Plotting landing successes and failures
     if landing_successes:
@@ -200,9 +222,13 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=12, frameon=False)
         plt.subplots_adjust(left=0.1, right=0.75, bottom=0.1, top=0.9)
         # Adding statistics box and placing it outside the plot, to the right
-        stats_text = (f'Mean: {np.mean(ram_usage):.2f}\n'
-                      f'Standard Deviation: {np.std(ram_usage):.2f}\n'
-                      f'Variance: {np.var(ram_usage):.2f}')
+        # stats_text = (f'Mean: {np.mean(ram_usage):.2f}\n'
+        #               f'Standard Deviation: {np.std(ram_usage):.2f}\n'
+        #               f'Variance: {np.var(ram_usage):.2f}')
+        #rewrite stats box to include units in MB
+        stats_text = (f'Mean: {np.mean(ram_usage):.2f} MB\n'
+                      f'Standard Deviation: {np.std(ram_usage):.2f} MB\n'
+                      f'Variance: {np.var(ram_usage):.2f} MB²')
         plt.gcf().text(0.77, 0.3, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
         # Save the image with a unique name
         plt.savefig(os.path.join(output_dir, 'ram_usage_over_episodes.png'), bbox_inches='tight', dpi=300)
