@@ -234,9 +234,9 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
         plt.savefig(os.path.join(output_dir, 'ram_usage_over_episodes.png'), bbox_inches='tight', dpi=300)
         plt.close()
 
-    # Plotting action distribution as a pie chart
+    # Plotting action distribution as a bar chart
     if action_counts:
-        # Create a pie chart for action distribution (excluding action 6 - "no action")
+        # Create a bar chart for action distribution (excluding action 6 - "no action")
         total_actions = sum(action_counts[action] for action in range(6))  # Exclude action 6
         if total_actions > 0:
             action_labels = ['Gimbal Left', 'Gimbal Right', 'Throttle Up', 'Throttle Down',
@@ -249,25 +249,39 @@ def plot_results(episodes, max_deviations, avg_deviations, min_deviations,
             # Define colors for each action
             colors = plt.cm.Paired.colors[:6]  # Using a color palette with six colors
 
-            # Create the pie chart without the labels
+            # Create a horizontal bar chart
             plt.figure(figsize=(16, 8))  # Match the figure size for consistency
-            wedges, _ = plt.pie(action_percentages, colors=colors, startangle=90)
+            bars = plt.barh(action_labels, action_percentages, color=colors)
 
-            # Positioning the legend box outside the plot, on the top right
-            legend_labels = [f'{label}: {percent:.1f}%' for label, percent in zip(action_labels, action_percentages)]
-            plt.legend(wedges, legend_labels, title="Actions", loc="upper left", bbox_to_anchor=(0.9, 1), fontsize=12, frameon=False)
+            # Add percentage labels inside each bar, centered, with a hard-coded min/max position
+            for bar, percentage in zip(bars, action_percentages):
+                # If the bar's width is too small, set a fixed position for the percentage text
+                if bar.get_width() < 10:
+                    text_position = bar.get_width() + 1  # Ensure the label is not drawn too far left
+                else:
+                    # Calculate the maximum horizontal position (max at 85% of the bar length)
+                    max_position = bar.get_width() * 0.85  # Cap at 85% of the bar's width
+                    # Set a minimum position to avoid too far left placement (min at 35% of bar length)
+                    min_position = bar.get_width() * 0.35
+                    # Ensure text is placed within these bounds
+                    text_position = max(min(bar.get_width() / 2, max_position), min_position)
+
+                plt.text(text_position, bar.get_y() + bar.get_height() / 2, f'{percentage:.1f}%', 
+                         ha='center', va='center', color='black', fontsize=12, fontweight='bold')
 
             # Calculate the mean number of actions per episode (for actions 0 to 5)
             mean_actions_per_episode = total_actions / len(episodes)
 
-            # Adding statistics box and placing it outside the plot, to the right
-            stats_text = (f'Mean number of actions per episode: {mean_actions_per_episode:.2f}')
-            plt.gcf().text(0.6, 0.3, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
+            # Adding the mean actions text inside the plot, top-right corner
+            stats_text = f'Mean number of actions per episode: {mean_actions_per_episode:.2f}'
+            plt.text(0.95, 0.95, stats_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.5), 
+                     ha='right', va='top', transform=plt.gca().transAxes)
 
-            # Adjust plot size to accommodate the legend and stats box
-            plt.subplots_adjust(left=0.1, right=0.75, bottom=0.1, top=0.9)
+            # Adjust plot size to make space for labels and stats
+            plt.subplots_adjust(left=0.2, right=0.9, bottom=0.1, top=0.9)
 
-            # Save the pie chart
+            # Save the bar chart
             plt.title(f'Action Distribution {title_suffix}', fontsize=16)
-            plt.savefig(os.path.join(output_dir, 'action_distribution_pie_chart.png'), bbox_inches='tight', dpi=300)
+            plt.xlabel('Percentage of Actions (%)', fontsize=14)
+            plt.savefig(os.path.join(output_dir, 'action_distribution_bar_chart.png'), bbox_inches='tight', dpi=300)
             plt.close()
