@@ -99,12 +99,16 @@ def train(cfg: Config) -> str:
         ),
     ]
 
-    model.learn(total_timesteps=cfg.algo["total_timesteps"], callback=callbacks,
-                progress_bar=True)
-
-    model.save(os.path.join(run_dir, "model"))
-    if cfg.env.normalize:
-        train_env.save(os.path.join(run_dir, "vecnormalize.pkl"))
+    try:
+        model.learn(total_timesteps=cfg.algo["total_timesteps"], callback=callbacks,
+                    progress_bar=False)
+    finally:
+        # Always persist the final model + normalization stats, even if the
+        # progress-bar teardown or a KeyboardInterrupt raises at the very end.
+        # (A prior run lost its final save to a rich/tqdm shutdown error here.)
+        model.save(os.path.join(run_dir, "model"))
+        if cfg.env.normalize:
+            train_env.save(os.path.join(run_dir, "vecnormalize.pkl"))
     print(f"[done] {run_dir}")
     return run_dir
 
@@ -116,6 +120,8 @@ def main():
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--timesteps", type=int, default=None,
                    help="override total_timesteps (useful for smoke tests)")
+    p.add_argument("--discrete", action="store_true",
+                   help="use the discrete action space (control to reproduce the known-good baseline)")
     p.add_argument("--out-dir", type=str, default=None)
     args = p.parse_args()
 
@@ -125,6 +131,9 @@ def main():
         cfg = default_ppo(args.seed) if args.algo == "ppo" else default_sac(args.seed)
     if args.timesteps is not None:
         cfg.algo["total_timesteps"] = args.timesteps
+    if args.discrete:
+        cfg.env.continuous = False
+        cfg.run_name = cfg.run_name + "_discrete"
     if args.out_dir is not None:
         cfg.out_dir = args.out_dir
     train(cfg)

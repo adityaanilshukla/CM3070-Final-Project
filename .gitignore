@@ -16,3 +16,6 @@ runs/
 
 # os
 .DS_Store
+
+# eval scratch output
+results/

@@ -18,7 +18,8 @@ class EnvConfig:
     env_id: str = "RocketLander-v1"
     continuous: bool = True
     n_envs: int = 1               # PPO overrides to 16; SAC uses 1
-    normalize: bool = True        # explicit VecNormalize (replaces baked-in MEAN/VAR)
+    normalize: bool = True        # VecNormalize obs normalization (replaces baked-in MEAN/VAR)
+    norm_reward: bool = True      # reward normalization; both defaults set it OFF (reward is pre-scaled to [-1,1])
     max_episode_steps: int = 1000
 
 
@@ -44,11 +45,14 @@ class SACConfig:
 class PPOConfig:
     algo: str = "ppo"
     policy: str = "MlpPolicy"
-    total_timesteps: int = 5_000_000
-    learning_rate: float = 3e-4
-    n_steps: int = 512
-    batch_size: int = 2048
-    n_epochs: int = 10
+    total_timesteps: int = 15_000_000
+    # Gentle recipe matching the original known-good PPO2 run (lr 1e-4, few epochs).
+    # The previous aggressive defaults (lr 3e-4, n_epochs 10) collapsed the policy
+    # entropy and failed to solve even LunarLander.
+    learning_rate: float = 1e-4
+    n_steps: int = 1024
+    batch_size: int = 4096
+    n_epochs: int = 4
     gamma: float = 0.99
     gae_lambda: float = 0.95
     clip_range: float = 0.2
@@ -86,7 +90,9 @@ def default_sac(seed: int = 0) -> Config:
     return Config(
         seed=seed,
         run_name=f"sac_s{seed}",
-        env=EnvConfig(n_envs=1, normalize=True),
+        # off-policy: normalize observations but NOT rewards (a drifting return-std
+        # makes replay-buffer targets inconsistent for the critic)
+        env=EnvConfig(n_envs=1, normalize=True, norm_reward=False),
         algo=asdict(SACConfig()),
     )
 
@@ -95,6 +101,9 @@ def default_ppo(seed: int = 0) -> Config:
     return Config(
         seed=seed,
         run_name=f"ppo_s{seed}",
-        env=EnvConfig(n_envs=16, normalize=True),
+        # reward is already hand-scaled to [-1,1] with a sparse +1 landing bonus;
+        # VecNormalize's running return-std would shrink that bonus into noise
+        # (matches the known-good recipe, which did not normalize reward)
+        env=EnvConfig(n_envs=16, normalize=True, norm_reward=False),
         algo=asdict(PPOConfig()),
     )

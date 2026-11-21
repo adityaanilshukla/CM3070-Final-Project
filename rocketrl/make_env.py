@@ -62,6 +62,7 @@ def build_vec_env(cfg: EnvConfig, seed: int, monitor_dir: str | None,
             venv.training = training
             venv.norm_reward = training
         else:
-            venv = VecNormalize(venv, norm_obs=True, norm_reward=training,
+            venv = VecNormalize(venv, norm_obs=True,
+                                norm_reward=cfg.norm_reward and training,
                                 clip_obs=10.0, gamma=0.99)
     return venv
