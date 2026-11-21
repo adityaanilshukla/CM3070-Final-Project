@@ -1,5 +1,9 @@
 # Rocket Lander: Learned vs. Classical Control
 
+[![CI](https://github.com/adityaanilshukla/CM3070-Final-Project/actions/workflows/ci.yml/badge.svg?branch=showcase-rebuild)](https://github.com/adityaanilshukla/CM3070-Final-Project/actions/workflows/ci.yml)
+
+> Active development happens on the [`showcase-rebuild`](https://github.com/adityaanilshukla/CM3070-Final-Project/tree/showcase-rebuild) branch (modern Gymnasium + Stable-Baselines3 stack, SAC/PPO/classical comparison). The CI badge above tracks that branch.
+
 A simulation study comparing two approaches to the problem of landing a rocket
 booster on a platform: a **learned controller** trained with reinforcement
 learning (Proximal Policy Optimization) and a **hand-designed controller** built
