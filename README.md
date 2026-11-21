@@ -22,7 +22,7 @@ One fixed-seed episode per controller, same start condition, rendered with `rock
   <tr>
     <td align="center">Not yet trained to reliable landings</td>
     <td align="center">Not yet trained to reliable landings</td>
-    <td align="center">seed 3 (this controller lands only occasionally; seed 3 is a clean landing)</td>
+    <td align="center">seed 6, a clean landing (this cascaded-PID controller lands ~48% of episodes)</td>
   </tr>
 </table>
 

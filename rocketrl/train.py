@@ -24,7 +24,7 @@ from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.callbacks import (
     CheckpointCallback, EvalCallback)
 
-from rocketrl.configs import Config, default_ppo, default_sac
+from rocketrl.configs import Config, default_ppo, default_sac, reproduction_ppo
 from rocketrl.make_env import build_vec_env
 from rocketrl.seeding import set_global_seeds
 
@@ -122,11 +122,15 @@ def main():
                    help="override total_timesteps (useful for smoke tests)")
     p.add_argument("--discrete", action="store_true",
                    help="use the discrete action space (control to reproduce the known-good baseline)")
+    p.add_argument("--repro", action="store_true",
+                   help="faithful reproduction of the original known-good PPO2 recipe")
     p.add_argument("--out-dir", type=str, default=None)
     args = p.parse_args()
 
     if args.config:
         cfg = Config.load(args.config)
+    elif args.repro:
+        cfg = reproduction_ppo(args.seed)
     else:
         cfg = default_ppo(args.seed) if args.algo == "ppo" else default_sac(args.seed)
     if args.timesteps is not None:

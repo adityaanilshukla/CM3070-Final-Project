@@ -20,6 +20,7 @@ class EnvConfig:
     n_envs: int = 1               # PPO overrides to 16; SAC uses 1
     normalize: bool = True        # VecNormalize obs normalization (replaces baked-in MEAN/VAR)
     norm_reward: bool = True      # reward normalization; both defaults set it OFF (reward is pre-scaled to [-1,1])
+    static_normalize: bool = False  # use the env's built-in static obs normalization (original recipe)
     max_episode_steps: int = 1000
 
 
@@ -94,6 +95,23 @@ def default_sac(seed: int = 0) -> Config:
         # makes replay-buffer targets inconsistent for the critic)
         env=EnvConfig(n_envs=1, normalize=True, norm_reward=False),
         algo=asdict(SACConfig()),
+    )
+
+
+def reproduction_ppo(seed: int = 0) -> Config:
+    """Faithful reproduction of the original known-good PPO2 recipe: discrete
+    actions, the env's STATIC observation normalization (no VecNormalize),
+    3000-step episodes, lr 1e-4, small minibatches, few epochs, 20M steps.
+    Used to confirm the rebuilt env is the same learnable task the original solved."""
+    algo = asdict(PPOConfig())
+    algo.update(total_timesteps=20_000_000, learning_rate=1e-4,
+                n_steps=1024, batch_size=256, n_epochs=3)
+    return Config(
+        seed=seed,
+        run_name=f"ppo_repro_s{seed}",
+        env=EnvConfig(n_envs=16, continuous=False, normalize=False,
+                      norm_reward=False, static_normalize=True, max_episode_steps=3000),
+        algo=algo,
     )
 
 

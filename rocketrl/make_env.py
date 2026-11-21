@@ -32,6 +32,7 @@ def make_single_env(cfg: EnvConfig, seed: int, rank: int, monitor_dir: str | Non
             continuous=cfg.continuous,
             max_episode_steps=cfg.max_episode_steps,
             render_mode=render_mode,
+            static_normalize=cfg.static_normalize,
         )
         monitor_path = None
         if monitor_dir is not None:

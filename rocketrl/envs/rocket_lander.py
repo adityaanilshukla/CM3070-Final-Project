@@ -61,6 +61,16 @@ VIEWPORT_W = 504
 H = 1.1 * START_HEIGHT * SCALE_S
 W = float(VIEWPORT_W) / VIEWPORT_H * H
 
+# Optional STATIC observation normalization, reproducing the original environment.
+# These mean/std constants were precomputed from successful trajectories, so unlike
+# a dynamic VecNormalize (which scales by stats over early high-altitude crash
+# states) they scale the near-pad landing region correctly. Used only when the env
+# is constructed with static_normalize=True.
+STATIC_OBS_MEAN = np.array([-0.034, -0.15, -0.016, 0.0024, 0.0024, 0.137,
+                            -0.02, -0.01, -0.8, 0.002], dtype=np.float32)
+STATIC_OBS_STD = np.sqrt(np.array([0.08, 0.33, 0.0073, 0.0023, 0.0023, 0.8,
+                                   0.085, 0.0088, 0.063, 0.076], dtype=np.float32))
+
 
 def rgb(r, g, b):
     return float(r) / 255, float(g) / 255, float(b) / 255
@@ -91,10 +101,12 @@ class ContactDetector(contactListener):
 class RocketLander(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": FPS}
 
-    def __init__(self, continuous: bool = True, render_mode: str | None = None):
+    def __init__(self, continuous: bool = True, render_mode: str | None = None,
+                 static_normalize: bool = False):
         super().__init__()
         self.continuous = continuous
         self.render_mode = render_mode
+        self.static_normalize = static_normalize
 
         self.world = Box2D.b2World()
         self.water = None
@@ -367,6 +379,8 @@ class RocketLander(gym.Env):
             }
 
         obs = np.array(state, dtype=np.float32)
+        if self.static_normalize:
+            obs = ((obs - STATIC_OBS_MEAN[:len(obs)]) / STATIC_OBS_STD[:len(obs)]).astype(np.float32)
         if self.render_mode == "human":
             self.render()
         # Truncation is applied by the TimeLimit wrapper, not here.
@@ -400,6 +414,64 @@ class RocketLander(gym.Env):
                 color = tuple(int(255 * c) for c in getattr(obj, "color1", (0.9, 0.9, 0.9)))
                 pygame.draw.polygon(surf, color, path)
                 pygame.draw.polygon(surf, (0, 0, 0), path, 1)
+
+        # Engine nozzle and exhaust flame. These are visual-only primitives (not
+        # Box2D bodies): the flame is anchored at the rocket base, rotated by the
+        # gimbal relative to the body, then carried through the body's own
+        # rotation/translation. Flame length scales with the main-engine power.
+        def engine_frame_to_screen(local_points):
+            gimbal_cos = np.cos(self.gimbal)
+            gimbal_sin = np.sin(self.gimbal)
+            body_angle = self.lander.angle
+            body_cos = np.cos(body_angle)
+            body_sin = np.sin(body_angle)
+            base_x = self.lander.position[0]
+            base_y = self.lander.position[1]
+            screen_points = []
+            for local_x, local_y in local_points:
+                gimbal_x = gimbal_cos * local_x - gimbal_sin * local_y
+                gimbal_y = gimbal_sin * local_x + gimbal_cos * local_y
+                world_x = body_cos * gimbal_x - body_sin * gimbal_y + base_x
+                world_y = body_sin * gimbal_x + body_cos * gimbal_y + base_y
+                screen_points.append(to_screen((world_x, world_y)))
+            return screen_points
+
+        if self.power > 0:
+            # Enlarged beyond the physical nozzle size so the exhaust reads
+            # clearly at the zoomed-out whole-descent viewport scale.
+            flame_width = ENGINE_WIDTH * 2.5
+            flame_length = ENGINE_HEIGHT * (1 + 18 * self.power)
+            flame_points = [
+                (flame_width * 0.5, -ENGINE_HEIGHT),
+                (-flame_width * 0.5, -ENGINE_HEIGHT),
+                (-flame_width, -flame_length * 0.6),
+                (0, -flame_length),
+                (flame_width, -flame_length * 0.6),
+            ]
+            # bright outer flame with a hotter inner core
+            pygame.draw.polygon(surf, (255, 170, 40), engine_frame_to_screen(flame_points))
+            inner_points = [
+                (flame_width * 0.28, -ENGINE_HEIGHT),
+                (-flame_width * 0.28, -ENGINE_HEIGHT),
+                (0, -flame_length * 0.7),
+            ]
+            pygame.draw.polygon(surf, (255, 240, 170), engine_frame_to_screen(inner_points))
+
+        engine_nozzle_points = [
+            (0, 0),
+            (ENGINE_WIDTH / 2, -ENGINE_HEIGHT),
+            (-ENGINE_WIDTH / 2, -ENGINE_HEIGHT),
+        ]
+        pygame.draw.polygon(surf, (100, 100, 100), engine_frame_to_screen(engine_nozzle_points))
+
+        # Side-thruster puff, drawn opposite to the applied lateral impulse.
+        if self.force_dir != 0:
+            thruster_points = [
+                (self.force_dir * ROCKET_WIDTH * 0.5, THRUSTER_HEIGHT),
+                (self.force_dir * ROCKET_WIDTH * 2.0, THRUSTER_HEIGHT * 1.03),
+                (self.force_dir * ROCKET_WIDTH * 2.0, THRUSTER_HEIGHT * 0.97),
+            ]
+            pygame.draw.polygon(surf, (200, 200, 200), engine_frame_to_screen(thruster_points))
 
         self._screen.blit(surf, (0, 0))
         if self.render_mode == "human":
