@@ -366,17 +366,18 @@ class RocketLander(gym.Env):
         reward = float(np.clip(reward, -1, 1))
         self.stepnumber += 1
 
-        info = {}
-        if terminated:
-            crashed = self.game_over and not landed
-            info = {
-                "landed": landed,
-                "crashed": crashed,
-                "touchdown_speed": float(speed),
-                "touchdown_angle": float(abs(angle)),
-                "x_landing": float(x_distance),
-                "fuel_used": float(self.fuel_used),
-            }
+        # Populate outcome keys on EVERY step, not only on termination, so that
+        # Monitor's info_keywords lookup also succeeds when an episode is
+        # truncated by the TimeLimit wrapper (the env itself never sees the
+        # truncation). On the terminal step these hold the true outcome.
+        info = {
+            "landed": landed,
+            "crashed": self.game_over and not landed,
+            "touchdown_speed": float(speed),
+            "touchdown_angle": float(abs(angle)),
+            "x_landing": float(x_distance),
+            "fuel_used": float(self.fuel_used),
+        }
 
         obs = np.array(state, dtype=np.float32)
         if self.static_normalize:
