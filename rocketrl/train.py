@@ -124,6 +124,10 @@ def main():
                    help="use the discrete action space (control to reproduce the known-good baseline)")
     p.add_argument("--repro", action="store_true",
                    help="faithful reproduction of the original known-good PPO2 recipe")
+    p.add_argument("--static-norm", action="store_true",
+                   help="use the env's static obs normalization instead of VecNormalize")
+    p.add_argument("--easy", action="store_true",
+                   help="eased initial-condition difficulty so from-scratch RL can learn")
     p.add_argument("--out-dir", type=str, default=None)
     args = p.parse_args()
 
@@ -135,6 +139,15 @@ def main():
         cfg = default_ppo(args.seed) if args.algo == "ppo" else default_sac(args.seed)
     if args.timesteps is not None:
         cfg.algo["total_timesteps"] = args.timesteps
+    if args.static_norm:
+        cfg.env.static_normalize = True
+        cfg.env.normalize = False
+        cfg.run_name = cfg.run_name + "_staticnorm"
+    if args.easy:
+        cfg.env.init_x_range = 0.15
+        cfg.env.init_vx_random = 0.2
+        cfg.env.init_spin = 0.5
+        cfg.run_name = cfg.run_name + "_easy"
     if args.discrete:
         cfg.env.continuous = False
         cfg.run_name = cfg.run_name + "_discrete"

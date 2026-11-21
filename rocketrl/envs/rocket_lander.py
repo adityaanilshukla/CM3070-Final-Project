@@ -102,11 +102,21 @@ class RocketLander(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": FPS}
 
     def __init__(self, continuous: bool = True, render_mode: str | None = None,
-                 static_normalize: bool = False):
+                 static_normalize: bool = False,
+                 init_x_range: float = 0.3,
+                 init_vx_random: float = INITIAL_RANDOM,
+                 init_spin: float = 1.0 + INITIAL_RANDOM):
         super().__init__()
         self.continuous = continuous
         self.render_mode = render_mode
         self.static_normalize = static_normalize
+        # Initial-condition difficulty knobs. Defaults reproduce the original
+        # (hard) task; an eased variant narrows the lateral start spread and
+        # reduces the initial horizontal velocity and spin so from-scratch RL
+        # can discover landings. Documented as task-shaping in the study.
+        self.init_x_range = init_x_range
+        self.init_vx_random = init_vx_random
+        self.init_spin = init_spin
 
         self.world = Box2D.b2World()
         self.water = None
@@ -204,7 +214,7 @@ class RocketLander(gym.Env):
         self.ship.color1 = (0.2, 0.2, 0.2)
 
         # Initial pose now uses the seeded RNG (was global np.random).
-        initial_x = W / 2 + W * self.np_random.uniform(-0.3, 0.3)
+        initial_x = W / 2 + W * self.np_random.uniform(-self.init_x_range, self.init_x_range)
         initial_y = H * 0.95
         self.lander = self.world.CreateDynamicBody(
             position=(initial_x, initial_y), angle=0.0,
@@ -247,9 +257,9 @@ class RocketLander(gym.Env):
             self.legs.append(leg)
 
         self.lander.linearVelocity = (
-            -self.np_random.uniform(0, INITIAL_RANDOM) * START_SPEED * 0.3 * (initial_x - W / 2) / W,
+            -self.np_random.uniform(0, self.init_vx_random) * START_SPEED * 0.3 * (initial_x - W / 2) / W,
             -START_SPEED)
-        self.lander.angularVelocity = (1 + INITIAL_RANDOM) * self.np_random.uniform(-1, 1)
+        self.lander.angularVelocity = self.init_spin * self.np_random.uniform(-1, 1)
 
         self.drawlist = self.legs + [self.water, self.ship] + self.containers + [self.lander]
 

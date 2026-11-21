@@ -22,6 +22,10 @@ class EnvConfig:
     norm_reward: bool = True      # reward normalization; both defaults set it OFF (reward is pre-scaled to [-1,1])
     static_normalize: bool = False  # use the env's built-in static obs normalization (original recipe)
     max_episode_steps: int = 1000
+    # initial-condition difficulty (defaults = original hard task)
+    init_x_range: float = 0.3
+    init_vx_random: float = 0.4
+    init_spin: float = 1.4
 
 
 @dataclass
