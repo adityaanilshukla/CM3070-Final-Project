@@ -19,3 +19,8 @@ runs/
 
 # eval scratch output
 results/
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
