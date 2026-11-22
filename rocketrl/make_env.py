@@ -37,6 +37,13 @@ def make_single_env(cfg: EnvConfig, seed: int, rank: int, monitor_dir: str | Non
             init_vx_random=cfg.init_vx_random,
             init_spin=cfg.init_spin,
         )
+        # Potential-based descent-profile shaping (inside Monitor so the agent
+        # sees the shaped reward). Kept below Monitor so the TimeLimit truncation
+        # signal still reaches the wrapper correctly.
+        if cfg.shape_descent:
+            from rocketrl.sacfd import DescentProfileShapingWrapper
+            env = DescentProfileShapingWrapper(env, w_shape=cfg.w_shape,
+                                               gamma=cfg.shape_gamma)
         monitor_path = None
         if monitor_dir is not None:
             os.makedirs(monitor_dir, exist_ok=True)

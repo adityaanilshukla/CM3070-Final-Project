@@ -28,6 +28,11 @@ class EnvConfig:
     init_x_range: float = 0.3
     init_vx_random: float = 0.4
     init_spin: float = 1.4
+    # Potential-based descent-velocity-profile shaping (SACfD; off by default).
+    # Adds gamma*Phi(s')-Phi(s) with Phi = -w_shape*|vy - v_ref(h)|.
+    shape_descent: bool = False
+    w_shape: float = 0.1
+    shape_gamma: float = 0.997
 
 
 @dataclass
@@ -110,6 +115,52 @@ def default_sac(seed: int = 0) -> Config:
         # region; its stats are dominated by early free-fall states)
         env=EnvConfig(n_envs=8, normalize=False, norm_reward=False, static_normalize=True),
         algo=asdict(SACConfig()),
+    )
+
+
+def default_sacfd(seed: int = 0, demo_path: str = "runs/sacfd_demos/demos.npz",
+                  demo_ratio: float = 0.25, learning_starts: int = 10_000,
+                  bc_coef: float = 2.0, bc_coef_final: float | None = None,
+                  bc_q_filter: bool = False,
+                  shape_descent: bool = False, w_shape: float = 0.1) -> Config:
+    """Demonstration-seeded SAC with the standard SACfD guardrails against the
+    Q-divergence that plain demo seeding showed.
+
+    Identical to default_sac EXCEPT:
+      * trainer is SACfD, adding a behavior-cloning auxiliary loss on the demo
+        rows (bc_coef, optionally decayed to bc_coef_final). The BC term both
+        guards the critic against the divergence plain seeding showed AND, at a
+        strong enough weight, forces the actor to track the demonstrated landing
+        trajectory down to the pad so on-policy landings enter the online buffer
+        and break the gamma-0.997 crash-attractor;
+      * the replay buffer is a DemoMixReplayBuffer (reserved, frozen demo
+        partition mixed into every batch at demo_ratio);
+      * gradient_steps 1 (not -1): the 8-updates-per-step cadence over-trained the
+        critic on off-policy demo data; with BC guarding the critic this is now a
+        throughput knob, not a stability one;
+      * learning_starts 10k (was 5k): more online data before training starts.
+
+    The demo-specific knobs live as plain values in cfg.algo so the config still
+    serializes to YAML; the trainer class and replay_buffer_class are resolved at
+    build time, not stored here."""
+    algo = asdict(SACConfig())
+    algo.update(
+        gradient_steps=1,
+        learning_starts=learning_starts,
+        use_demos=True,
+        demo_path=demo_path,
+        demo_ratio=demo_ratio,
+        bc_coef=bc_coef,
+        bc_coef_final=bc_coef_final,
+        bc_q_filter=bc_q_filter,
+    )
+    return Config(
+        seed=seed,
+        run_name=f"sacfd_s{seed}",
+        env=EnvConfig(n_envs=8, normalize=False, norm_reward=False, static_normalize=True,
+                      shape_descent=shape_descent, w_shape=w_shape,
+                      shape_gamma=SACConfig().gamma),
+        algo=algo,
     )
 
 
