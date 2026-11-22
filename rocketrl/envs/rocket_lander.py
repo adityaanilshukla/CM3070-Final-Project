@@ -448,10 +448,12 @@ class RocketLander(gym.Env):
             return screen_points
 
         if self.power > 0:
-            # Enlarged beyond the physical nozzle size so the exhaust reads
-            # clearly at the zoomed-out whole-descent viewport scale.
-            flame_width = ENGINE_WIDTH * 2.5
-            flame_length = ENGINE_HEIGHT * (1 + 18 * self.power)
+            # Flame size scales DIRECTLY with actual engine thrust (self.power),
+            # so minimum throttle (power 0.4) shows a small flame and full throttle
+            # (power 1.0) a large one. Both length and width scale with power, with
+            # an overall magnification so it still reads at the zoomed-out viewport.
+            flame_length = ENGINE_HEIGHT * 24 * self.power
+            flame_width = ENGINE_WIDTH * (0.6 + 2.2 * self.power)
             flame_points = [
                 (flame_width * 0.5, -ENGINE_HEIGHT),
                 (-flame_width * 0.5, -ENGINE_HEIGHT),
