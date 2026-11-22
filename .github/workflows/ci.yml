@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [showcase-rebuild]
+    branches: [main, showcase-rebuild]
   pull_request:
-    branches: [showcase-rebuild]
+    branches: [main, showcase-rebuild]
   workflow_dispatch:
 
 jobs:
