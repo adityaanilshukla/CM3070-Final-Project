@@ -25,3 +25,4 @@ paper/*.aux
 paper/*.log
 paper/*.out
 runs_smoke*/
+__pycache__/
