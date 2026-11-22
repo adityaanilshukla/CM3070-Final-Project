@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [showcase-rebuild]
+  pull_request:
+    branches: [showcase-rebuild]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Environment + controllers smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies for Box2D
+        run: sudo apt-get update && sudo apt-get install -y swig
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync the environment (CPU torch is fine on CI)
+        run: uv sync --python 3.11
+
+      - name: Package imports and env registration
+        run: uv run python -c "import rocketrl, rocketrl.envs, rocketrl.controllers, rocketrl.evaluate; print('imports ok')"
+
+      - name: Gymnasium API conformance + random rollouts
+        run: uv run python scripts/check_env.py
+
+      - name: Classical controller loads and acts
+        run: uv run python -c "import numpy as np, gymnasium as gym, rocketrl.envs; from rocketrl.controllers.lqr import make_classical_controller; e=gym.make('RocketLander-v1', continuous=True); o,_=e.reset(seed=0); c=make_classical_controller(); c.reset(); a=c.act(o); assert a.shape==(3,); print('classical controller ok')"
+
+      - name: Evaluation harness runs end-to-end (random, 5 episodes)
+        run: uv run python -m rocketrl.evaluate --controllers random --n-episodes 5 --seed 0

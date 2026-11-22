@@ -1,8 +1,21 @@
+# legacy venvs
 rocket-lander-env
-__pycache__/logging.cpython-37.pyc
-__pycache__/rocket_lander.cpython-37.pyc
-todo.txt
-__pycache__/fsm_controller.cpython-37.pyc
 rocket-lander-env-windows
-__pycache__/plot_results.cpython-37.pyc
-__pycache__/ppo_controller.cpython-37.pyc
+todo.txt
+
+# python
+__pycache__/
+*.py[cod]
+
+# uv / new env (uv.lock IS committed for reproducibility)
+.venv/
+
+# experiment outputs
+runs/
+*.pkl
+
+# os
+.DS_Store
+
+# eval scratch output
+results/

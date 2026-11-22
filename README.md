@@ -1,127 +1,97 @@
-# Rocket Lander: Learned vs. Classical Control
+# Rocket Lander: Learned vs. Classical Control (CM3070)
 
 [![CI](https://github.com/adityaanilshukla/CM3070-Final-Project/actions/workflows/ci.yml/badge.svg?branch=showcase-rebuild)](https://github.com/adityaanilshukla/CM3070-Final-Project/actions/workflows/ci.yml)
 
-> Active development happens on the [`showcase-rebuild`](https://github.com/adityaanilshukla/CM3070-Final-Project/tree/showcase-rebuild) branch (modern Gymnasium + Stable-Baselines3 stack, SAC/PPO/classical comparison). The CI badge above tracks that branch.
+A simulation study of rocket soft-landing control that compares **learned controllers** (reinforcement learning: PPO and SAC) against **hand-designed controllers** (classical feedback control) on the same task, and then studies **knowledge transfer between the two paradigms**. A simulated booster must land upright and gently on a narrow pad from a wide range of initial offsets, velocities, and spins.
 
-A simulation study comparing two approaches to the problem of landing a rocket
-booster on a platform: a **learned controller** trained with reinforcement
-learning (Proximal Policy Optimization) and a **hand-designed controller** built
-as a finite state machine with PID loops. Both control the same physics
-simulation; the project measures how they differ in landing success and in the
-quality of the control they produce.
+This branch is a ground-up rebuild of an earlier version on a modern, reproducible stack (Gymnasium + Stable-Baselines3 + PyTorch, managed with `uv`), with a seeded evaluation harness and continuous integration.
 
-![PPO landing trajectory](plots/single-episode/PPO/trajectory.png)
+## Landings
 
-## Research question
+Deterministic policies landing at full difficulty (hover-slam-style for PPO, smooth descent for the classical controller). Rendered with the simulator's own renderer; flame size tracks actual engine thrust.
 
-> On a 2D rocket soft-landing task, how does a policy learned from reward
-> compare against an explicitly engineered state-machine controller, in terms of
-> landing success rate and control quality (stability, precision, and control
-> smoothness)?
+<table>
+  <tr>
+    <th align="center">PPO (learned)</th>
+    <th align="center">Classical, fast (PPO-distilled)</th>
+    <th align="center">Classical, careful</th>
+  </tr>
+  <tr>
+    <td align="center" width="33%"><img src="assets/gifs/ppo.gif" width="200" alt="PPO agent landing"></td>
+    <td align="center" width="33%"><img src="assets/gifs/fast.gif" width="200" alt="Fast PPO-distilled controller landing"></td>
+    <td align="center" width="33%"><img src="assets/gifs/classical.gif" width="200" alt="Careful classical controller landing"></td>
+  </tr>
+  <tr>
+    <td align="center">~9 s committed descent</td>
+    <td align="center">~11 s, flies the learned strategy by hand</td>
+    <td align="center">~20 s, careful descent</td>
+  </tr>
+</table>
 
-The motivation is the contrast between the two control paradigms. The FSM
-encodes a human's step-by-step landing procedure (orient, cancel horizontal
-drift, descend, touch down) with tuned thresholds. The PPO agent is given only a
-reward signal and discovers a policy on its own. Comparing them on identical
-dynamics isolates what each paradigm buys you.
+> The middle controller is **hand-coded**: it flies the fast "hover-slam" strategy *distilled* from the PPO agent, so it lands about twice as fast as the careful controller at comparable reliability. A GIF of the demonstration-seeded **SAC** agent will be added if that experiment yields a reliable lander.
 
-## The environment
+## Results
 
-The simulation (`rocket_lander.py`) is a Box2D rigid-body model of a rocket
-descending toward a landing pad, adapted from the open-source RocketLander
-environment and exposed through the OpenAI Gym API.
+All figures at **full difficulty**, strict seeded evaluation (100+ held-out seeds, 3000-step episode cap, deterministic policies), landing defined as both legs down and settled at low speed on the pad.
 
-- **Observation (10-D):** horizontal and vertical position relative to the pad,
-  body angle, two landing-leg contact flags, current throttle and engine gimbal,
-  and the three velocity components.
-- **Actions (discrete):** nudge the engine gimbal left/right, throttle up/down,
-  fire the left/right side thruster, or do nothing.
-- **Reward:** potential-based shaping toward a centered, upright, low-velocity
-  touchdown, a fuel penalty, a large bonus for a stable landing, and a penalty
-  for crashing or drifting out of bounds.
+| Controller | Landing rate | Time to land | Fuel (RCS) | Smoothness |
+|---|---|---|---|---|
+| **PPO** (on-policy RL) | **~91%** | ~9 s | ~0.00 | n/a (discrete) |
+| **Classical, careful** (cascaded PID) | **~89%** | ~22 s | ~1.0 | smooth |
+| **Classical, fast** (PPO-distilled) | **~86-90%** | **~11 s** | ~0.6 | smooth |
+| **SAC** (off-policy RL) | ~48% (baseline) | — | — | — |
 
-A landing counts as successful when both legs stay in contact with the pad at
-low speed for a full second of simulated time.
+SAC's number is under active investigation; see "Status" below.
 
-## The two controllers
+## Key findings
 
-**PPO (learned).** Trained with Stable-Baselines PPO2 for 20M environment steps.
-The training entry point is `train_ppo_model.py`; checkpoints are saved under
-`model/`, and the TensorBoard logs are in `RocketLander_tensorboard/`.
+1. **Faithful modern reproduction.** PPO on the rebuilt stack reaches ~91% at full difficulty, matching the original project's result, on a seeded, reproducible pipeline.
+2. **Learned and classical control reach near-parity** on landing reliability (~91% vs ~89%) on this hard precision task, rather than one paradigm dominating.
+3. **The learned agent is far more efficient**, PPO lands ~2.6x faster on near-zero thruster fuel, because the reward rewards time and fuel. The hand-designed controller, tuned purely for reliability, trades speed and fuel for precision.
+4. **Knowledge transfer, RL to classical.** PPO's fast "hover-slam" strategy was distilled into a two-parameter braking insight and implemented in a deterministic controller, giving a hand-coded controller that lands ~2x faster and smoother than the careful one, at comparable reliability. This answers the question "can a deterministic controller be improved using behavioral insight from an RL policy?" in the affirmative, with a measured, explained ceiling.
+5. **Knowledge transfer, classical to RL** (in progress). SAC fails to discover the sparse landing by exploration alone; seeding its replay buffer with the controller's demonstrations is being used to bootstrap it.
 
-**FSM + PID (engineered).** `fsm_controller.py` implements a finite state machine
-that sequences the landing into phases and uses PID loops to drive the body
-angle and descent rate, mapping their outputs onto the discrete actions.
+## Research questions
 
-## Evaluation
+- How do on-policy (PPO) and off-policy (SAC) deep RL compare against principled classical control on a hard precision-landing task, in reliability, speed, and fuel?
+- Can a deterministic controller be improved by distilling behavioral insight from a trained RL policy?
+- Can a struggling RL agent be bootstrapped from a working controller's demonstrations?
 
-Each controller is run for 100 episodes (`eval_ppo.py`, `eval_fsm.py`) and
-compared across several dimensions, with the figures generated by
-`plot_results.py` into `plots/comparison/`:
+## Setup
 
-- landing success rate,
-- horizontal landing precision,
-- attitude stability through the descent,
-- gimbal and throttle control smoothness,
-- action distribution.
+Requires [`uv`](https://docs.astral.sh/uv/). The GPU path uses a CUDA 12.8 PyTorch build (for Blackwell / RTX 50-series); CPU also works.
 
-Single-episode diagnostics (trajectory, velocities, gimbal and throttle traces)
-for each controller are in `plots/single-episode/`.
+```bash
+uv sync                      # create the venv and install everything (pinned in uv.lock)
+uv run python scripts/check_env.py   # sanity-check the environment
+```
 
-Both controllers land the rocket in the large majority of episodes. The detailed
-per-metric comparison is in the figures above.
+## Usage
 
-> **Note on methodology.** This is a course project and the evaluation has known
-> limitations: the two controllers are run on independent, unseeded initial
-> conditions rather than a shared seeded test set, and some reported metrics
-> (wall-clock timing, magnitude-based "smoothness") do not mean quite what their
-> labels suggest. A rigorous, reproducible re-evaluation with seeded paired
-> episodes, confidence intervals, and significance testing is in progress on the
-> `showcase-rebuild` branch, which also ports the project to a modern
-> Gymnasium + Stable-Baselines3 stack and adds SAC and an LQR baseline.
+```bash
+# Train (examples)
+uv run python -m rocketrl.train --algo ppo --repro --seed 0      # faithful PPO reproduction
+uv run python -m rocketrl.train --algo sac --seed 0              # SAC
+
+# Evaluate controllers on a seeded bank with confidence intervals
+uv run python -m rocketrl.evaluate --controllers random lqr --n-episodes 200 --seed 0
+
+# Record landing GIFs
+uv run python -m rocketrl.record_gifs --classical --seed 6 --out-dir assets/gifs
+```
 
 ## Repository layout
 
 | Path | Purpose |
 |------|---------|
-| `rocket_lander.py` | Box2D rocket-landing environment |
-| `ppo_controller.py`, `train_ppo_model.py` | PPO model definition and training |
-| `fsm_controller.py` | Finite-state-machine + PID controller |
-| `run_ppo_model.py`, `run_fsm_model.py` | Roll out a single episode per controller |
-| `eval_ppo.py`, `eval_fsm.py` | 100-episode evaluation producing per-metric data |
-| `plot_results.py`, `plot_*_single_episode.py` | Figure generation |
-| `model/` | Trained PPO checkpoints |
-| `plots/` | Comparison and single-episode figures |
+| `rocketrl/envs/` | Gymnasium RocketLander environment (continuous and discrete) |
+| `rocketrl/controllers/` | classical controllers (careful PID, PPO-distilled fast) + RL-policy adapter |
+| `rocketrl/train.py`, `configs.py` | training entrypoint and dataclass experiment configs |
+| `rocketrl/evaluate.py` | paired seeded evaluation with Wilson / bootstrap CIs and significance tests |
+| `rocketrl/record_gifs.py` | landing-GIF recorder |
+| `scripts/` | environment checks and utilities |
+| `.github/workflows/ci.yml` | CI (environment, env-conformance, controller, and harness smoke tests) |
 
-## Setup and usage
+## Status
 
-The code targets the legacy stack it was trained on: **Python 3.7**,
-TensorFlow 1.13, and Stable-Baselines 2.10.
-
-```bash
-python3.7 -m venv rocket-lander-env
-source rocket-lander-env/bin/activate        # Windows: rocket-lander-env\Scripts\activate
-pip install setuptools==65.5.0               # needed before gym installs cleanly
-pip install -r requirements.txt
-```
-
-Run a single landing with either controller:
-
-```bash
-python run_ppo_model.py      # learned policy
-python run_fsm_model.py      # engineered controller
-```
-
-Reproduce the evaluation and figures:
-
-```bash
-python eval_ppo.py
-python eval_fsm.py
-python plot_results.py
-```
-
-## License and credits
-
-The Box2D environment is adapted from the open-source RocketLander project.
-Reinforcement learning is implemented with Stable-Baselines.
+Active development on the `showcase-rebuild` branch. In progress: refining the PPO-distilled fast controller, and a demonstration-seeded (SACfD-style) SAC run to lift SAC above its exploration-limited baseline. The `main` branch holds the original (legacy) version.
