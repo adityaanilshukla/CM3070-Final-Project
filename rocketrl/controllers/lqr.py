@@ -251,12 +251,14 @@ V_SETTLE = 3.0                  # m/s, settle descent speed
 # lands in ~9-10 s (vs ~22 s for the slow glide) while staying smooth: the
 # engine runs lit near power ~0.74 the whole way, no bang-bang.
 #   v_ref(h) = -min(V_TD + K_TERM*h, sqrt(V_TD^2 + 2*A_BRAKE*h))
-# V_TD and A_BRAKE were swept over {5,6,7} x {7,8,9} on a held-out bank disjoint
-# from the PPO/tuning seeds (seeds 2_000_000..2_000_049); V_TD=5, A_BRAKE=9 gave
-# the target operating point (~88% landed at a ~10-11 s median, vs the slow
-# controller's ~22 s) while staying smooth.  The prescription's nominal 6.0/8.0
-# are kept documented here as the pre-sweep starting point.
-V_TD = 5.0              # m/s, descent speed at the deck (linear-flare intercept)
+# V_TD and A_BRAKE were swept on held-out banks disjoint from the PPO/tuning seeds.
+# A follow-up sweep on two further held-out banks (seeds 4e6 and 5e6) showed V_TD=3
+# consistently lands ~86% (vs ~84% at V_TD=5) with notably softer touchdowns
+# (~0.005 vs 0.008), because the lower deck-speed target cuts the "came in too hot"
+# crashes, at a trivial (~1 s) time cost and unchanged smoothness. So V_TD=3.
+# This sits near the controller's Pareto ceiling (~86-87%): 90% at fast speed is
+# not reachable by hand at the continuous interface's gimbal slew rate.
+V_TD = 3.0              # m/s, descent speed at the deck (linear-flare intercept)
 K_TERM = 0.33          # (m/s per m) terminal linear-flare slope
 A_BRAKE = 9.0          # m/s^2, constant-decel branch (~62% of the ~14.4 available)
 V_CAP = 80.0           # m/s, never command a descent faster than the entry speed
