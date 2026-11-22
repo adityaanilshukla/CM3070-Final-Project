@@ -21,7 +21,9 @@ class EnvConfig:
     normalize: bool = True        # VecNormalize obs normalization (replaces baked-in MEAN/VAR)
     norm_reward: bool = True      # reward normalization; both defaults set it OFF (reward is pre-scaled to [-1,1])
     static_normalize: bool = False  # use the env's built-in static obs normalization (original recipe)
-    max_episode_steps: int = 1000
+    # The discovery landing takes ~930-1000 sim steps; a 1000 cap amputates exactly
+    # those trajectories, so landing is never found. The original used 3000.
+    max_episode_steps: int = 3000
     # initial-condition difficulty (defaults = original hard task)
     init_x_range: float = 0.3
     init_vx_random: float = 0.4
@@ -95,9 +97,9 @@ def default_sac(seed: int = 0) -> Config:
     return Config(
         seed=seed,
         run_name=f"sac_s{seed}",
-        # off-policy: normalize observations but NOT rewards (a drifting return-std
-        # makes replay-buffer targets inconsistent for the critic)
-        env=EnvConfig(n_envs=1, normalize=True, norm_reward=False),
+        # static obs normalization (dynamic VecNormalize mis-scales the near-pad
+        # region; its stats are dominated by early free-fall states)
+        env=EnvConfig(n_envs=1, normalize=False, norm_reward=False, static_normalize=True),
         algo=asdict(SACConfig()),
     )
 
@@ -123,9 +125,8 @@ def default_ppo(seed: int = 0) -> Config:
     return Config(
         seed=seed,
         run_name=f"ppo_s{seed}",
-        # reward is already hand-scaled to [-1,1] with a sparse +1 landing bonus;
-        # VecNormalize's running return-std would shrink that bonus into noise
-        # (matches the known-good recipe, which did not normalize reward)
-        env=EnvConfig(n_envs=16, normalize=True, norm_reward=False),
+        # static obs normalization + no reward normalization, matching the
+        # original known-good recipe (dynamic VecNormalize was the worst performer)
+        env=EnvConfig(n_envs=16, normalize=False, norm_reward=False, static_normalize=True),
         algo=asdict(PPOConfig()),
     )
