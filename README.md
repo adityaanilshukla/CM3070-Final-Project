@@ -13,19 +13,22 @@ Deterministic policies landing at full difficulty (hover-slam-style for PPO, smo
 <table>
   <tr>
     <th align="center">PPO (learned)</th>
-    <th align="center">Classical (hand-designed)</th>
+    <th align="center">Classical, fast (PPO-distilled)</th>
+    <th align="center">Classical, careful</th>
   </tr>
   <tr>
-    <td align="center" width="50%"><img src="assets/gifs/ppo.gif" width="240" alt="PPO agent landing"></td>
-    <td align="center" width="50%"><img src="assets/gifs/classical.gif" width="240" alt="Classical controller landing"></td>
+    <td align="center" width="33%"><img src="assets/gifs/ppo.gif" width="200" alt="PPO agent landing"></td>
+    <td align="center" width="33%"><img src="assets/gifs/fast.gif" width="200" alt="Fast PPO-distilled controller landing"></td>
+    <td align="center" width="33%"><img src="assets/gifs/classical.gif" width="200" alt="Careful classical controller landing"></td>
   </tr>
   <tr>
-    <td align="center">lands in ~9 s, committed descent</td>
-    <td align="center">lands in ~20 s, careful descent</td>
+    <td align="center">~9 s committed descent</td>
+    <td align="center">~11 s, flies the learned strategy by hand</td>
+    <td align="center">~20 s, careful descent</td>
   </tr>
 </table>
 
-> A GIF of the **PPO-distilled fast classical controller** (a hand-coded controller that flies the fast PPO strategy) and the demonstration-seeded **SAC** agent will be added as those experiments finalize.
+> The middle controller is **hand-coded**: it flies the fast "hover-slam" strategy *distilled* from the PPO agent, so it lands about twice as fast as the careful controller at comparable reliability. A GIF of the demonstration-seeded **SAC** agent will be added if that experiment yields a reliable lander.
 
 ## Results
 
@@ -35,10 +38,10 @@ All figures at **full difficulty**, strict seeded evaluation (100+ held-out seed
 |---|---|---|---|---|
 | **PPO** (on-policy RL) | **~91%** | ~9 s | ~0.00 | n/a (discrete) |
 | **Classical, careful** (cascaded PID) | **~89%** | ~22 s | ~1.0 | smooth |
-| **Classical, fast** (PPO-distilled) | **~85%** | **~11 s** | ~0.6 | smooth |
+| **Classical, fast** (PPO-distilled) | **~86-90%** | **~11 s** | ~0.6 | smooth |
 | **SAC** (off-policy RL) | ~48% (baseline) | — | — | — |
 
-Numbers for the fast controller and SAC are being refined; see "Status" below.
+SAC's number is under active investigation; see "Status" below.
 
 ## Key findings
 
