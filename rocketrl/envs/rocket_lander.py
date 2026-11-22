@@ -447,7 +447,12 @@ class RocketLander(gym.Env):
                 screen_points.append(to_screen((world_x, world_y)))
             return screen_points
 
-        if self.power > 0:
+        # Rendering-only: once the rocket is settled on both legs, don't draw
+        # engine exhaust (a real booster cuts its engine on touchdown). This is a
+        # pure visual decision; the physics/control are untouched, the engine may
+        # still sit at its minimum-throttle floor in the dynamics.
+        settled_on_pad = self.legs[0].ground_contact and self.legs[1].ground_contact
+        if self.power > 0 and not settled_on_pad:
             # Flame size scales DIRECTLY with actual engine thrust (self.power),
             # so minimum throttle (power 0.4) shows a small flame and full throttle
             # (power 1.0) a large one. Both length and width scale with power, with
