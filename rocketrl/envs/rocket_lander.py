@@ -424,7 +424,6 @@ class RocketLander(gym.Env):
                 path = [to_screen(trans * v) for v in f.shape.vertices]
                 color = tuple(int(255 * c) for c in getattr(obj, "color1", (0.9, 0.9, 0.9)))
                 pygame.draw.polygon(surf, color, path)
-                pygame.draw.polygon(surf, (0, 0, 0), path, 1)
 
         # Engine nozzle and exhaust flame. These are visual-only primitives (not
         # Box2D bodies): the flame is anchored at the rocket base, rotated by the
