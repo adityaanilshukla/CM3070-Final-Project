@@ -119,14 +119,30 @@ ALT_SPAN = H - SHIPHEIGHT                  # meters mapped by y_distance (~364.5
 # no flare discontinuity, so the rocket keeps descending smoothly into the pad
 # instead of over-braking into a hover.  At h=0 the target is -V_TOUCH, i.e. the
 # rocket flies into the deck at a safe speed rather than hovering above it.
-#   K_SLOPE chosen so the cap is reached around h~200 m: (V_DESC_MAX-V_TOUCH)/200.
+#   The 3000-step budget favours a SLOW descent: a shallow K_SLOPE and a low
+#   V_DESC_MAX, so the rocket sinks gently while it finishes centering.
 V_TOUCH = 2.5           # m/s, terminal descent speed at the pad (well under 8 gate)
-V_DESC_MAX = 45.0       # m/s, cap on commanded descent speed (brake early, stay safe)
-K_SLOPE = 0.205         # (m/s per m) glide-slope gradient: ~(45-2.5)/207
+# Deliberately SLOW descent.  The episode budget is 3000 steps (50 s), so the
+# winning strategy is to brake to a low speed early and sink gently while
+# centering over the pad the whole way down (a steep, fast glide leaves no time
+# to finish centering, which is the dominant failure).  A low V_DESC_MAX caps
+# the whole mid-descent; a shallow K_SLOPE keeps it slow well above the pad.
+V_DESC_MAX = 22.0       # m/s, cap on commanded descent speed (slow, patient fall)
+K_SLOPE = 0.07          # (m/s per m) glide-slope gradient: gentle (reaches cap ~280 m)
 # Vertical-speed feedback bandwidth.  Thrust can be re-pointed within a few
-# tenths of a second, so a ~1 rad/s speed loop is realistic.
-KP_VY = 1.1             # (m/s^2) per (m/s) vertical-speed error
-A_Y_MAX = 13.0          # m/s^2, clamp on commanded vertical accel (< full-throttle 14)
+# tenths of a second, so a slightly-above-1 rad/s speed loop is realistic.
+KP_VY = 1.5             # (m/s^2) per (m/s) vertical-speed error
+# Max commanded vertical accel.  The achievable value is thrust-limited AND
+# falls with tilt (vertical thrust component ~ Tmax*cos(tilt) - G), so it is
+# clamped DYNAMICALLY at runtime (see THRUST_ACCEL_MAX); this static value is
+# only a conservative absolute ceiling.
+A_Y_MAX = 15.0          # m/s^2, absolute ceiling (set above the ~14 feasible
+                        # max so the dynamic tilt-aware clamp below is what binds)
+# Peak thrust acceleration = MAIN_ENGINE_POWER * power(=1) / MASS.  Used to clamp
+# the commanded vertical accel to what the engine can actually deliver at the
+# current tilt, so the vertical loop never asks for infeasible braking.
+THRUST_ACCEL_MAX = MAIN_ENGINE_POWER / MASS      # ~24.4 m/s^2
+A_Y_FEASIBLE_MARGIN = 1.0                         # command full feasible thrust when braking
 
 # ---------------------------------------------------------------------------
 # LATERAL loop gains  (drive x_m, vx_m -> 0 via a commanded horizontal accel,
@@ -138,19 +154,33 @@ A_Y_MAX = 13.0          # m/s^2, clamp on commanded vertical accel (< full-throt
 # container-free zone in time -- but a direct, lag-free lateral-velocity damper
 # via the side thruster (see SIDE_AX_TRIGGER below), which lets us run a moderate
 # omega_n ~ 0.45 rad/s with heavy damping (zeta ~ 1.8).  KP=wn^2, KD=2*zeta*wn.
-LAT_WN = 0.45
-LAT_ZETA = 1.8
-KP_X = LAT_WN ** 2            # ~0.20  (m/s^2 per m)
-KD_X = 2 * LAT_ZETA * LAT_WN  # ~1.62  (m/s^2 per m/s)
-# Tilt authority.  The usable landing strip is narrow (|x_landing| < 0.073, i.e.
-# ~20 m body offset, before a splayed leg clips a container), so generous tilt
-# is needed to centre far-starting seeds (initial offset up to ~0.37 ~ 49 m).
-TILT_MAX = 0.42             # rad, max commanded tilt
+LAT_WN = 0.40
+LAT_ZETA = 1.6
+KP_X = LAT_WN ** 2            # ~0.16  (m/s^2 per m)
+KD_X = 2 * LAT_ZETA * LAT_WN  # ~1.28  (m/s^2 per m/s)
+# Tilt authority.  Kept MODEST on purpose: with the slow 3000-step descent there
+# is ample time to centre, and a large tilt cap makes the position loop overshoot
+# -- it tilts hard early, builds a large lateral velocity, then spends the rest
+# of the fall undoing it (which also steals vertical braking).  A small cap plus
+# the lag-free side thruster centres smoothly without that overshoot.
+TILT_MAX = 0.25             # rad, max commanded tilt
+# Small position gain used only in the settle phase, where the body is held
+# upright and the side thruster (lag-free) trims the last few metres onto the
+# pad centre.  Much smaller than KP_X so it nudges rather than shoves.
+KP_X_SETTLE = 0.05          # (m/s^2 per m) settle-phase centering gain
+# Spin gate: suppress the lateral tilt command while the initial spin is being
+# arrested (|omega| above OMEGA_GATE_OK), fading to SPIN_GATE_MIN authority.
+OMEGA_GATE_OK = 0.35        # rad/s, spin below which full tilt is allowed
+OMEGA_GATE_SCALE = 0.9      # rad/s, span over which tilt fades to SPIN_GATE_MIN
+SPIN_GATE_MIN = 0.1         # floor on tilt-authority fraction during spin-kill
 # Position-chase cutoff: below H_POS_CUT stop steering toward the pad and only
 # DAMP lateral velocity (null vx).  Chasing the last few metres of position near
 # the ground just tilts the body and builds vx that cannot be nulled before
 # touchdown; landing upright and slow a little off-centre beats a fast arrival.
-H_POS_CUT = 9.0            # m, below this the position (KP_X) term fades out
+H_POS_CUT = 22.0          # m, below this the position (KP_X) term fades out.
+# Kept high so the rocket is still actively steered toward the pad well into the
+# final descent (the slow fall gives time to use it); residual centering below
+# this is handled by the lag-free side thruster, which does not tilt the body.
 T_EST_FLOOR = 6.0           # m/s^2, floor on thrust-accel estimate for tilt mapping
 # Leveling taper: lateral steering tilts the body, but a tilted touchdown snaps
 # a leg (the env's brokenleg check) even at low speed.  So fade the commanded
@@ -158,8 +188,8 @@ T_EST_FLOOR = 6.0           # m/s^2, floor on thrust-accel estimate for tilt map
 # strictly upright below H_LEVEL_LO -- trading a little landing-spot precision
 # for an upright, leg-safe touchdown.  The window must give the slow gimbal time
 # to null the tilt: ~20 m at ~7 m/s descent is ~3 s, enough.
-H_LEVEL_HI = 24.0            # m, above this: full lateral steering
-H_LEVEL_LO = 7.0            # m, below this: strictly upright (desired_tilt = 0)
+H_LEVEL_HI = 22.0            # m, above this: full lateral steering
+H_LEVEL_LO = 3.0            # m, below this: strictly upright (desired_tilt = 0)
 
 # ---------------------------------------------------------------------------
 # ATTITUDE loop gains  (angle -> gimbal position command).
@@ -257,12 +287,20 @@ class CascadedPIDController:
         # ================================================================
         # VERTICAL loop -> throttle command (feedback-linearized)
         # ================================================================
+        # Dynamically feasible upward accel: the vertical thrust component is
+        # Tmax*cos(tilt), so the most the rocket can decelerate a fall is
+        # Tmax*cos(tilt) - G.  Clamping to this (with a small margin) keeps the
+        # vertical loop from commanding braking the tilted engine cannot deliver.
+        a_y_hi = min(A_Y_MAX,
+                     THRUST_ACCEL_MAX * max(np.cos(theta + gimbal), 0.3)
+                     * A_Y_FEASIBLE_MARGIN - G)
+
         if self._settling:
             # Keep flying a gentle fixed descent (NOT throttle-off, which would
             # drop the rocket onto the second leg too hard and trip the speed
             # gate).  Reuse the feedback-linearized throttle for v_target=-V_SETTLE.
             a_y_des = KP_VY * (-V_SETTLE - vy_m)
-            a_y_des = float(np.clip(a_y_des, -G, A_Y_MAX))
+            a_y_des = float(np.clip(a_y_des, -G, a_y_hi))
             axis = max(np.cos(theta + gimbal), 0.3)
             power = (G + a_y_des) / axis * MASS / MAIN_ENGINE_POWER
             throttle_cmd = float(np.clip(
@@ -285,7 +323,7 @@ class CascadedPIDController:
                 a_y_ff = 0.0                       # on the speed cap, no FF
             # Feedforward + vertical-speed PD -> desired vertical acceleration.
             a_y_des = a_y_ff + KP_VY * (v_target - vy_m)
-            a_y_des = float(np.clip(a_y_des, -G, A_Y_MAX))  # stay thrust-feasible
+            a_y_des = float(np.clip(a_y_des, -G, a_y_hi))  # stay thrust-feasible
             # Feedback linearization: thrust accel needed = G + a_y_des, but the
             # thrust is along the body axis, so the vertical component is
             # cos(theta+gimbal); divide it out so tilt does not sag the altitude.
@@ -300,9 +338,12 @@ class CascadedPIDController:
         # LATERAL loop -> desired body tilt
         # ================================================================
         if self._settling:
-            # Landing where we are: no position chase, just damp residual lateral
-            # velocity (used below by the side thruster); stay strictly upright.
-            a_x_des = -KD_X * vx_m
+            # Stay strictly upright (no tilt), but keep a SMALL bounded position
+            # term in a_x_des so the lag-free side thruster nudges the rocket onto
+            # the pad centre during the settle -- this directly fixes the common
+            # "lands soft but just outside |x|<0.073" failure.  The gain is tiny
+            # (KP_X_SETTLE << KP_X) so it only trims, never shoves.
+            a_x_des = -(KP_X_SETTLE * x_m + KD_X * vx_m)
             desired_tilt = 0.0
         else:
             # PD on (x, vx) -> commanded horizontal acceleration toward the pad.
@@ -321,6 +362,15 @@ class CascadedPIDController:
             level_taper = np.clip((h_m - H_LEVEL_LO) / (H_LEVEL_HI - H_LEVEL_LO),
                                   0.0, 1.0)
             desired_tilt *= level_taper
+            # SPIN GATE: while the initial body spin (up to ~1.4 rad/s) is still
+            # being arrested, suppress the lateral tilt command.  Otherwise the
+            # attitude transient of killing the spin AND chasing a tilt setpoint
+            # overshoots -- for a far, same-signed-spin start it tilts the body
+            # further off-pad and steals vertical braking (a too-fast crash).
+            # This only acts for the ~1 s spin-kill, then full lateral resumes.
+            spin_gate = np.clip(1.0 - (abs(omega) - OMEGA_GATE_OK) / OMEGA_GATE_SCALE,
+                                SPIN_GATE_MIN, 1.0)
+            desired_tilt *= spin_gate
 
         # ================================================================
         # ATTITUDE loop -> gimbal position command (+ side thruster)
