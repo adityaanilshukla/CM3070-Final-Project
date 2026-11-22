@@ -427,12 +427,22 @@ def _decode(obs):
         h_m=(obs[1] / 2.0 + 0.5) * ALT_SPAN,
         theta=float(obs[2]),
         contact=(obs[3] > CONTACT or obs[4] > CONTACT),
+        both_contact=(obs[3] > CONTACT and obs[4] > CONTACT),
         throttle=obs[5] / 2.0 + 0.5,
         gimbal=obs[6] * GIMBAL_THRESHOLD,
         vx_m=obs[7] * START_SPEED,
         vy_m=obs[8] * START_SPEED,
         omega=float(obs[9]),
     )
+
+
+# Touchdown engine-cut action: neutral gimbal rate, throttle driven hard to zero
+# (so power drops below the MIN_THROTTLE floor to a true engine-off), no thruster.
+# Once BOTH legs are planted, continuing to fire the engine at its 40% floor keeps
+# the body light and can tip it or stop it settling under the speed gate; cutting
+# the engine lets it seat on the legs and settle, which is how a real booster (and
+# the original FSM) behaves. Latched per episode once both legs touch.
+_ENGINE_CUT_ACTION = np.array([0.0, -1.0, 0.0], dtype=np.float32)
 
 
 def _assemble_action(throttle_cmd, desired_tilt, a_x_des, s):
@@ -464,10 +474,18 @@ class CascadedPIDController:
         it here stops any information crossing an episode boundary (the old FSM
         leaked exactly this kind of state)."""
         self._settling = False          # latched once a leg touches / we are low
+        self._touched_down = False      # latched once BOTH legs plant -> cut engine
 
     def act(self, obs: np.ndarray) -> np.ndarray:
         s = _decode(np.asarray(obs, dtype=np.float32))
         s["_settling"] = self._settling
+
+        # Both legs planted: cut the engine and let the rocket seat and settle
+        # (latched for the rest of the episode).
+        if s["both_contact"]:
+            self._touched_down = True
+        if self._touched_down:
+            return _ENGINE_CUT_ACTION.copy()
 
         # Latch settle on the FIRST leg contact or once very low (never unlatch).
         if s["contact"] or s["h_m"] < H_SETTLE:
@@ -507,10 +525,18 @@ class FastLandingController:
         self._patient = False           # latched routing decision (fast vs patient)
         self._gated = False             # the H_GATE decision has been taken
         self._first = True              # first observation of the episode
+        self._touched_down = False      # latched once BOTH legs plant -> cut engine
 
     def act(self, obs: np.ndarray) -> np.ndarray:
         s = _decode(np.asarray(obs, dtype=np.float32))
         x_m, h_m, vx_m, vy_m, omega = s["x_m"], s["h_m"], s["vx_m"], s["vy_m"], s["omega"]
+
+        # Both legs planted: cut the engine and let the rocket seat and settle
+        # (latched for the rest of the episode).
+        if s["both_contact"]:
+            self._touched_down = True
+        if self._touched_down:
+            return _ENGINE_CUT_ACTION.copy()
 
         # Router rule 1 (first obs): a large offset with ADVERSE initial spin
         # (x_m * omega < 0, so the spin-recovery transient tilts AWAY from the
