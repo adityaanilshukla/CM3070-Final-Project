@@ -17,20 +17,23 @@ Deterministic policies landing at full difficulty. Flame size tracks the engine 
     <th align="center">PPO (learned)</th>
     <th align="center">Classical, fast (PPO-distilled)</th>
     <th align="center">Classical, careful</th>
+    <th align="center">SAC (demo-seeded)</th>
   </tr>
   <tr>
-    <td align="center" width="33%"><img src="assets/gifs/ppo.gif" width="200" alt="PPO agent landing"></td>
-    <td align="center" width="33%"><img src="assets/gifs/fast.gif" width="200" alt="Fast PPO-distilled controller landing"></td>
-    <td align="center" width="33%"><img src="assets/gifs/classical.gif" width="200" alt="Careful classical controller landing"></td>
+    <td align="center" width="25%"><img src="assets/gifs/ppo.gif" width="170" alt="PPO agent landing"></td>
+    <td align="center" width="25%"><img src="assets/gifs/fast.gif" width="170" alt="Fast PPO-distilled controller landing"></td>
+    <td align="center" width="25%"><img src="assets/gifs/classical.gif" width="170" alt="Careful classical controller landing"></td>
+    <td align="center" width="25%"><img src="assets/gifs/sac.gif" width="170" alt="Demonstration-seeded SAC landing"></td>
   </tr>
   <tr>
     <td align="center">~9 s committed descent</td>
     <td align="center">~11 s, flies the learned strategy by hand</td>
     <td align="center">~20 s, careful descent</td>
+    <td align="center">rescued from 0% by demonstrations</td>
   </tr>
 </table>
 
-The middle controller is hand-coded, yet it flies the fast descent strategy distilled from the PPO agent, so it lands about twice as quickly as the careful controller at comparable reliability.
+The second controller is hand-coded, yet it flies the fast descent strategy distilled from the PPO agent, so it lands about twice as quickly as the careful controller at comparable reliability.
 
 ## Results
 
@@ -41,7 +44,7 @@ All figures are measured at full difficulty under a seeded evaluation (100 or mo
 | PPO (on-policy RL) | ~91% | ~9 s | ~0.00 | n/a (discrete) |
 | Classical, careful (cascaded PID) | ~89% | ~22 s | ~1.0 | smooth |
 | Classical, fast (PPO-distilled) | ~86-90% | ~11 s | ~0.6 | smooth |
-| SAC (off-policy RL) | ~48% (baseline) | n/a | n/a | n/a |
+| SAC (off-policy RL) | 0% vanilla, ~70% demo-seeded | ~19 s | ~0.6 | smooth |
 
 ## Key findings
 
@@ -49,7 +52,7 @@ All figures are measured at full difficulty under a seeded evaluation (100 or mo
 2. Learned control and classical control land about as reliably as each other, roughly 91% against 89%, rather than one approach dominating.
 3. The learned agent is far more efficient: PPO lands about 2.6 times faster on near-zero thruster fuel, because the reward values time and fuel. The careful controller, tuned only for reliability, trades speed and fuel for precision.
 4. Knowledge transfers from RL to classical control. PPO's fast hoverslam descent reduces to a two-parameter braking rule, which turns a hand-written controller into one that lands roughly twice as fast and more smoothly, at comparable reliability. There is a measured ceiling: a hand-tuned controller cannot be both fast and as reliable as PPO, because its gimbal slews far slower than the learned policy's discrete controls allow.
-5. Transfer from classical control back to RL is harder. SAC fails to discover the sparse landing by exploration, and faces a discount dilemma: one discount setting makes it hover forever, the other makes it dive and crash. Demonstrations constrain its actions but not its value estimates, so landings appear and then erode. (Investigation ongoing.)
+5. Transfer from classical control back to RL works, but it is harder, and SAC still trails. On its own SAC never lands: it fails to discover the sparse landing by exploration, and faces a discount dilemma where one discount setting makes it hover forever and the other makes it dive and crash. Seeding its replay memory with the controller's landing demonstrations makes landings appear but then erode, because demonstrations constrain its actions and not its value estimates. Adding a potential-based reward term that rewards tracking the good descent profile reshapes the value landscape and makes the landings persist. The result is a policy that lands about 70% of the time, up from 0%, though still below PPO and the hand-coded controllers. The landing policy also peaks early in training and erodes if trained too long, so the reported figure is from the best checkpoint.
 
 ## Setup
 

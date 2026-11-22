@@ -43,8 +43,7 @@ def build_model(cfg: Config, train_env, tb_dir: str):
         policy_kwargs=dict(net_arch=a["net_arch"]),
     )
     if a["algo"] == "sac":
-        return SAC(
-            **common,
+        sac_kwargs = dict(
             buffer_size=a["buffer_size"],
             batch_size=a["batch_size"],
             tau=a["tau"],
@@ -53,6 +52,23 @@ def build_model(cfg: Config, train_env, tb_dir: str):
             learning_starts=a["learning_starts"],
             ent_coef=a["ent_coef"],
         )
+        # SACfD: resolve the demo-mixed replay buffer and the BC-regularized
+        # trainer here (neither class object is stored in the YAML config; only
+        # demo_path / demo_ratio / bc_coef are).
+        if a.get("use_demos"):
+            from rocketrl.sacfd import DemoMixReplayBuffer, SACfD
+            sac_kwargs["replay_buffer_class"] = DemoMixReplayBuffer
+            sac_kwargs["replay_buffer_kwargs"] = dict(
+                demo_path=a["demo_path"],
+                demo_ratio=a["demo_ratio"],
+            )
+            return SACfD(
+                **common, **sac_kwargs,
+                bc_coef=a.get("bc_coef", 0.5),
+                bc_coef_final=a.get("bc_coef_final"),
+                bc_q_filter=a.get("bc_q_filter", False),
+            )
+        return SAC(**common, **sac_kwargs)
     if a["algo"] == "ppo":
         return PPO(
             **common,
