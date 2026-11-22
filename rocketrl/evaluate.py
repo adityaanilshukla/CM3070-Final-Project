@@ -732,7 +732,9 @@ def main() -> None:
     )
     p.add_argument("--n-episodes", type=int, default=200)
     p.add_argument("--seed", type=int, default=0, help="shifts the fixed eval seed bank (see EVAL_SEED_OFFSET)")
-    p.add_argument("--max-episode-steps", type=int, default=1000)
+    p.add_argument("--max-episode-steps", type=int, default=3000,
+                   help="episode cap for evaluation; must be large enough not to truncate "
+                        "legitimate landings (the classical controller needs up to ~1800 steps)")
     p.add_argument("--out-dir", type=str, default="results/eval")
     p.add_argument("--tag", type=str, default=None, help="output subdir name; default is a UTC timestamp")
     p.add_argument("--n-boot", type=int, default=10000, help="bootstrap resamples for CIs")
