@@ -34,16 +34,23 @@ class EnvConfig:
 class SACConfig:
     algo: str = "sac"
     policy: str = "MlpPolicy"
-    total_timesteps: int = 1_000_000
+    total_timesteps: int = 3_000_000
     learning_rate: float = 3e-4
-    buffer_size: int = 1_000_000
-    batch_size: int = 256
+    # smaller buffer discards the stale crash/hover-era transitions
+    buffer_size: int = 300_000
+    batch_size: int = 512
     tau: float = 0.005
-    gamma: float = 0.99
+    # gamma 0.997 (not 0.99) kills the hover local optimum: at 0.99 the discounted
+    # cost of hovering (~-0.42) beats crashing (~-1), so hovering is an attractor;
+    # at 0.997 hovering costs ~-1.4 and the ~1000-step-away landing payoff is
+    # discounted far less. This is a SAC-specific objective change (ablate vs 0.99).
+    gamma: float = 0.997
     train_freq: int = 1
-    gradient_steps: int = 1
-    learning_starts: int = 10_000
-    ent_coef: str = "auto"
+    gradient_steps: int = -1      # one update per env step collected (per-env)
+    learning_starts: int = 25_000
+    # fixed small entropy coef; "auto" collapsed to ~1e-4 immediately and left the
+    # actor unregularized, causing the late-run policy churn (stoch > det)
+    ent_coef: float = 0.01
     net_arch: list[int] = field(default_factory=lambda: [256, 256])
     device: str = "cuda"          # SAC gradient updates benefit from the GPU
 
@@ -97,9 +104,11 @@ def default_sac(seed: int = 0) -> Config:
     return Config(
         seed=seed,
         run_name=f"sac_s{seed}",
+        # 8 parallel envs: decorrelate the replay buffer and lift throughput
+        # (~190 -> ~600-1000 steps/s, the Box2D sim is the serial bottleneck).
         # static obs normalization (dynamic VecNormalize mis-scales the near-pad
         # region; its stats are dominated by early free-fall states)
-        env=EnvConfig(n_envs=1, normalize=False, norm_reward=False, static_normalize=True),
+        env=EnvConfig(n_envs=8, normalize=False, norm_reward=False, static_normalize=True),
         algo=asdict(SACConfig()),
     )
 
