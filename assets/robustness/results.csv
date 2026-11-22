@@ -1,77 +1,77 @@
 perturbation,level,controller,landing_rate,n_seeds
-sensor_noise,0.0,PPO,0.9333,30
-sensor_noise,0.0,SAC (demo),0.6667,30
-sensor_noise,0.0,Classical careful,0.8333,30
-sensor_noise,0.0,Classical fast,0.8333,30
-sensor_noise,0.02,PPO,0.9667,30
-sensor_noise,0.02,SAC (demo),0.7000,30
-sensor_noise,0.02,Classical careful,0.8333,30
-sensor_noise,0.02,Classical fast,0.7667,30
-sensor_noise,0.05,PPO,0.9667,30
-sensor_noise,0.05,SAC (demo),0.7000,30
-sensor_noise,0.05,Classical careful,0.5333,30
-sensor_noise,0.05,Classical fast,0.6000,30
-sensor_noise,0.1,PPO,0.9667,30
-sensor_noise,0.1,SAC (demo),0.7000,30
-sensor_noise,0.1,Classical careful,0.0000,30
-sensor_noise,0.1,Classical fast,0.1000,30
-sensor_noise,0.2,PPO,0.9667,30
-sensor_noise,0.2,SAC (demo),0.2000,30
-sensor_noise,0.2,Classical careful,0.0000,30
-sensor_noise,0.2,Classical fast,0.0333,30
-init_scale,1.0,PPO,0.9333,30
-init_scale,1.0,SAC (demo),0.6667,30
-init_scale,1.0,Classical careful,0.8333,30
-init_scale,1.0,Classical fast,0.8333,30
-init_scale,1.25,PPO,0.7667,30
-init_scale,1.25,SAC (demo),0.6000,30
-init_scale,1.25,Classical careful,0.7000,30
-init_scale,1.25,Classical fast,0.6667,30
-init_scale,1.5,PPO,0.6333,30
-init_scale,1.5,SAC (demo),0.4000,30
-init_scale,1.5,Classical careful,0.6667,30
-init_scale,1.5,Classical fast,0.6000,30
-wind,0.0,PPO,0.9333,30
-wind,0.0,SAC (demo),0.6667,30
-wind,0.0,Classical careful,0.8333,30
-wind,0.0,Classical fast,0.8333,30
-wind,10.0,PPO,0.8000,30
-wind,10.0,SAC (demo),0.3333,30
-wind,10.0,Classical careful,0.6000,30
-wind,10.0,Classical fast,0.7000,30
-wind,20.0,PPO,0.6333,30
-wind,20.0,SAC (demo),0.3000,30
-wind,20.0,Classical careful,0.3667,30
-wind,20.0,Classical fast,0.2667,30
-wind,30.0,PPO,0.3333,30
-wind,30.0,SAC (demo),0.1000,30
-wind,30.0,Classical careful,0.4333,30
-wind,30.0,Classical fast,0.3667,30
-wind,40.0,PPO,0.0667,30
-wind,40.0,SAC (demo),0.1000,30
-wind,40.0,Classical careful,0.0000,30
-wind,40.0,Classical fast,0.0333,30
-mass,0.9,PPO,1.0000,30
-mass,0.9,SAC (demo),0.0000,30
-mass,0.9,Classical careful,0.0000,30
-mass,0.9,Classical fast,0.4000,30
-mass,0.95,PPO,0.9667,30
-mass,0.95,SAC (demo),0.1667,30
-mass,0.95,Classical careful,0.3667,30
-mass,0.95,Classical fast,0.4333,30
-mass,1.0,PPO,0.9333,30
-mass,1.0,SAC (demo),0.6667,30
-mass,1.0,Classical careful,0.8333,30
-mass,1.0,Classical fast,0.8333,30
-mass,1.05,PPO,0.8667,30
-mass,1.05,SAC (demo),0.6000,30
-mass,1.05,Classical careful,0.7333,30
-mass,1.05,Classical fast,0.7333,30
-mass,1.1,PPO,0.3000,30
-mass,1.1,SAC (demo),0.4667,30
-mass,1.1,Classical careful,0.7000,30
-mass,1.1,Classical fast,0.7000,30
-mass,1.15,PPO,0.0000,30
-mass,1.15,SAC (demo),0.0667,30
-mass,1.15,Classical careful,0.4000,30
-mass,1.15,Classical fast,0.5000,30
+sensor_noise,0.0,PPO,0.9100,100
+sensor_noise,0.0,SAC (demo),0.7000,100
+sensor_noise,0.0,Classical careful,0.8900,100
+sensor_noise,0.0,Classical fast,0.8700,100
+sensor_noise,0.02,PPO,0.9400,100
+sensor_noise,0.02,SAC (demo),0.7200,100
+sensor_noise,0.02,Classical careful,0.8600,100
+sensor_noise,0.02,Classical fast,0.7900,100
+sensor_noise,0.05,PPO,0.9600,100
+sensor_noise,0.05,SAC (demo),0.7200,100
+sensor_noise,0.05,Classical careful,0.5000,100
+sensor_noise,0.05,Classical fast,0.4800,100
+sensor_noise,0.1,PPO,0.9700,100
+sensor_noise,0.1,SAC (demo),0.7200,100
+sensor_noise,0.1,Classical careful,0.0000,100
+sensor_noise,0.1,Classical fast,0.0900,100
+sensor_noise,0.2,PPO,0.9500,100
+sensor_noise,0.2,SAC (demo),0.2800,100
+sensor_noise,0.2,Classical careful,0.0000,100
+sensor_noise,0.2,Classical fast,0.0300,100
+init_scale,1.0,PPO,0.9100,100
+init_scale,1.0,SAC (demo),0.7000,100
+init_scale,1.0,Classical careful,0.8900,100
+init_scale,1.0,Classical fast,0.8700,100
+init_scale,1.25,PPO,0.6800,100
+init_scale,1.25,SAC (demo),0.5200,100
+init_scale,1.25,Classical careful,0.7200,100
+init_scale,1.25,Classical fast,0.6900,100
+init_scale,1.5,PPO,0.5800,100
+init_scale,1.5,SAC (demo),0.4100,100
+init_scale,1.5,Classical careful,0.6300,100
+init_scale,1.5,Classical fast,0.5600,100
+wind,0.0,PPO,0.9100,100
+wind,0.0,SAC (demo),0.7000,100
+wind,0.0,Classical careful,0.8900,100
+wind,0.0,Classical fast,0.8700,100
+wind,10.0,PPO,0.8100,100
+wind,10.0,SAC (demo),0.4500,100
+wind,10.0,Classical careful,0.7000,100
+wind,10.0,Classical fast,0.6800,100
+wind,20.0,PPO,0.4500,100
+wind,20.0,SAC (demo),0.3100,100
+wind,20.0,Classical careful,0.4200,100
+wind,20.0,Classical fast,0.4500,100
+wind,30.0,PPO,0.1700,100
+wind,30.0,SAC (demo),0.1300,100
+wind,30.0,Classical careful,0.4900,100
+wind,30.0,Classical fast,0.4800,100
+wind,40.0,PPO,0.0300,100
+wind,40.0,SAC (demo),0.1500,100
+wind,40.0,Classical careful,0.0300,100
+wind,40.0,Classical fast,0.0400,100
+mass,0.9,PPO,0.9400,100
+mass,0.9,SAC (demo),0.0400,100
+mass,0.9,Classical careful,0.0000,100
+mass,0.9,Classical fast,0.2500,100
+mass,0.95,PPO,0.9300,100
+mass,0.95,SAC (demo),0.1900,100
+mass,0.95,Classical careful,0.3500,100
+mass,0.95,Classical fast,0.4400,100
+mass,1.0,PPO,0.9100,100
+mass,1.0,SAC (demo),0.7000,100
+mass,1.0,Classical careful,0.8900,100
+mass,1.0,Classical fast,0.8700,100
+mass,1.05,PPO,0.7400,100
+mass,1.05,SAC (demo),0.5900,100
+mass,1.05,Classical careful,0.7600,100
+mass,1.05,Classical fast,0.7200,100
+mass,1.1,PPO,0.2400,100
+mass,1.1,SAC (demo),0.5100,100
+mass,1.1,Classical careful,0.6300,100
+mass,1.1,Classical fast,0.6300,100
+mass,1.15,PPO,0.0000,100
+mass,1.15,SAC (demo),0.0700,100
+mass,1.15,Classical careful,0.3400,100
+mass,1.15,Classical fast,0.4600,100
