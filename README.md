@@ -41,15 +41,17 @@ All figures are measured at full difficulty under a seeded evaluation (100 or mo
 
 | Controller | Landing rate | Time to land | Fuel (RCS) | Smoothness |
 |---|---|---|---|---|
-| PPO (on-policy RL) | ~91% | ~9 s | ~0.00 | n/a (discrete) |
+| PPO (on-policy RL) | 91% best seed; 71% ± 27 across 3 seeds | ~9 s | ~0.00 | n/a (discrete) |
 | Classical, careful (cascaded PID) | ~89% | ~22 s | ~1.0 | smooth |
 | Classical, fast (PPO-distilled) | ~86-90% | ~11 s | ~0.6 | smooth |
 | SAC (off-policy RL) | 0% vanilla, ~70% demo-seeded | ~19 s | ~0.6 | smooth |
 
+The PPO figure is seed-sensitive. Across three independently seeded training runs, two seeds reached 89% and 91% while a third collapsed to 33%, giving a mean of 71% (standard deviation 27). The best seed reproduces the earlier single-seed result; the spread is reported here because the original was never run across seeds. Each per-seed number is from that seed's best checkpoint, selected on a seed bank disjoint from the 100-seed evaluation bank.
+
 ## Key findings
 
-1. The rebuilt PPO agent reaches about 91% at full difficulty on a seeded, reproducible pipeline, matching the earlier version's result.
-2. Learned control and classical control land about as reliably as each other, roughly 91% against 89%, rather than one approach dominating.
+1. The rebuilt PPO agent's best seed reaches about 91% at full difficulty on a seeded, reproducible pipeline, reproducing the earlier single-seed result. The outcome is seed-sensitive: of three independently seeded runs, two landed around 90% and one collapsed to 33%, for a mean of 71% (standard deviation 27). Reporting that variance, rather than a single lucky run, is the honest version of the original claim, and the sensitivity itself is consistent with known results on reproducibility in deep reinforcement learning (Henderson et al., 2018).
+2. Learned control and classical control land about as reliably as each other when PPO trains successfully, roughly 90% against 89%, rather than one approach dominating. The classical controller has the practical advantage of landing at that rate every time it is built, with no seed lottery.
 3. The learned agent is far more efficient: PPO lands about 2.6 times faster on near-zero thruster fuel, because the reward values time and fuel. The careful controller, tuned only for reliability, trades speed and fuel for precision.
 4. Knowledge transfers from RL to classical control. PPO's fast hoverslam descent reduces to a two-parameter braking rule, which turns a hand-written controller into one that lands roughly twice as fast and more smoothly, at comparable reliability. There is a measured ceiling: a hand-tuned controller cannot be both fast and as reliable as PPO, because its gimbal slews far slower than the learned policy's discrete controls allow.
 5. Transfer from classical control back to RL works, but it is harder, and SAC still trails. On its own SAC never lands: it fails to discover the sparse landing by exploration, and faces a discount dilemma where one discount setting makes it hover forever and the other makes it dive and crash. Seeding its replay memory with the controller's landing demonstrations makes landings appear but then erode, because demonstrations constrain its actions and not its value estimates. Adding a potential-based reward term that rewards tracking the good descent profile reshapes the value landscape and makes the landings persist. The result is a policy that lands about 70% of the time, up from 0%, though still below PPO and the hand-coded controllers. The landing policy also peaks early in training and erodes if trained too long, so the reported figure is from the best checkpoint.
